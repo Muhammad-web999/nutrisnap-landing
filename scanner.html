@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriSnap AI — Smart Food Scanner</title>
+<meta name="description" content="AI-powered meal scanner that recognizes 500+ Pakistani and global dishes instantly"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--p:#00C896;--s:#6C63FF;--a:#FF6B6B;--g:#FFD700;--dark:#0D0D1A;--card:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.1);--sub:#AAB4C8;}
+body{background:var(--dark);color:#fff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden;}
+*::-webkit-scrollbar{display:none;}
+
+/* HEADER */
+.header{background:rgba(13,13,26,0.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 16px;position:sticky;top:0;z-index:100;}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.logo{font-size:16px;font-weight:900;}.logo span{color:var(--p);}
+.logo-sub{font-size:10px;color:var(--sub);margin-top:1px;}
+.key-btn{background:rgba(255,107,107,0.15);border:1px solid rgba(255,107,107,0.3);color:var(--a);padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;}
+.key-btn.set{background:rgba(0,200,150,0.15);border-color:rgba(0,200,150,0.3);color:var(--p);}
+.key-input{width:100%;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:#fff;font-size:13px;outline:none;margin-top:8px;display:none;}
+.key-input.show{display:block;}
+.key-note{font-size:10px;color:var(--sub);margin-top:4px;display:none;}
+.key-note.show{display:block;}
+.tabs{display:flex;gap:4px;background:rgba(255,255,255,0.05);border-radius:10px;padding:3px;}
+.tab{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--sub);border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.tab.active{background:linear-gradient(135deg,var(--p),var(--s));color:#fff;}
+
+/* CONTENT */
+.content{padding:14px 14px 80px;max-width:480px;margin:0 auto;}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px;}
+.card-grad{background:linear-gradient(135deg,rgba(0,200,150,0.08),rgba(108,99,255,0.08));border-color:rgba(0,200,150,0.25);}
+
+/* SCAN ZONE */
+.scan-zone{text-align:center;padding:28px;}
+.scan-icon{font-size:56px;margin-bottom:12px;}
+.scan-title{font-size:16px;font-weight:800;margin-bottom:6px;}
+.scan-sub{color:var(--sub);font-size:12px;line-height:1.6;margin-bottom:20px;}
+.scan-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+/* BUTTONS */
+.btn{border:none;border-radius:12px;padding:12px 20px;font-weight:700;font-size:14px;cursor:pointer;transition:all 0.2s;}
+.btn-p{background:linear-gradient(135deg,var(--p),var(--s));color:#fff;box-shadow:0 4px 16px rgba(0,200,150,0.3);}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,200,150,0.4);}
+.btn-s{background:linear-gradient(135deg,var(--s),var(--a));color:#fff;box-shadow:0 4px 16px rgba(108,99,255,0.3);}
+.btn-a{background:rgba(255,107,107,0.15);color:var(--a);border:1px solid rgba(255,107,107,0.3);}
+.btn-g{background:rgba(255,255,255,0.08);color:#fff;border:1px solid var(--border);}
+.btn-full{width:100%;margin-top:8px;}
+
+/* RESULT */
+.result-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.result-name{font-size:16px;font-weight:800;}
+.result-meta{font-size:11px;color:var(--sub);margin-top:3px;}
+.result-desc{font-size:12px;color:#ddd;margin-top:4px;line-height:1.5;}
+.badge{padding:5px 10px;border-radius:10px;text-align:center;}
+.badge-val{font-size:18px;font-weight:900;}
+.badge-lbl{font-size:9px;color:var(--sub);margin-top:1px;}
+
+/* TAGS */
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.tag{background:rgba(0,200,150,0.1);border:1px solid rgba(0,200,150,0.2);color:var(--p);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.tag-alert{background:rgba(255,107,107,0.1);border-color:rgba(255,107,107,0.2);color:var(--a);}
+
+/* NUTRITION GRID */
+.nut-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.nut-box{border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.nut-val{font-size:18px;font-weight:800;}
+.nut-lbl{font-size:10px;color:var(--sub);}
+
+/* EXTRA MACROS */
+.extra-macros{display:flex;gap:8px;}
+.extra-box{flex:1;border-radius:10px;padding:8px;text-align:center;}
+.extra-val{font-size:13px;font-weight:700;}
+.extra-lbl{font-size:9px;color:var(--sub);}
+
+/* PORTION */
+.portion-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.portion-opt{padding:10px 12px;border-radius:12px;border:2px solid var(--border);cursor:pointer;text-align:center;transition:all 0.2s;}
+.portion-opt.sel{border-color:var(--p);background:rgba(0,200,150,0.1);}
+.portion-icon{font-size:22px;}
+.portion-name{font-size:12px;font-weight:700;color:#fff;margin-top:4px;}
+.portion-desc{font-size:10px;color:var(--sub);}
+.portion-mult{font-size:10px;color:var(--sub);}
+
+/* TIPS */
+.tip-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--sub);margin-bottom:6px;}
+.health-note{background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:10px;padding:10px 12px;font-size:12px;color:#ddd;line-height:1.6;margin-bottom:8px;}
+
+/* EDIT */
+.edit-input{width:100%;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:#fff;font-size:13px;outline:none;margin-bottom:8px;}
+
+/* FOOD DB */
+.search-input{width:100%;background:rgba(255,255,255,0.07);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:#fff;font-size:14px;outline:none;margin-bottom:12px;}
+.food-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;}
+.food-item:hover{border-color:var(--p);}
+.food-item.sel{border-color:var(--p);background:rgba(0,200,150,0.06);}
+.food-row{display:flex;align-items:center;gap:12px;}
+.food-emoji{width:44px;height:44px;background:rgba(255,255,255,0.06);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.food-name{font-weight:700;font-size:14px;}
+.food-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;}
+.food-tag{padding:1px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+
+/* LOG */
+.totals-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;}
+.total-box{border-radius:10px;padding:10px;text-align:center;}
+.total-val{font-size:16px;font-weight:900;}
+.total-lbl{font-size:9px;color:var(--sub);margin-top:2px;}
+.log-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.log-emoji{width:44px;height:44px;background:rgba(0,200,150,0.12);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.log-name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.log-meta{font-size:10px;color:var(--sub);margin-top:2px;}
+.log-cal{color:var(--p);font-weight:900;font-size:15px;text-align:right;flex-shrink:0;}
+.log-unit{font-size:9px;color:var(--sub);}
+.del-btn{background:none;border:none;color:var(--a);cursor:pointer;font-size:14px;margin-top:2px;}
+
+/* TOAST */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:50px;font-size:13px;font-weight:700;z-index:9999;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.4);display:none;}
+.toast.show{display:block;animation:fadeIn 0.3s ease;}
+.toast-s{background:var(--p);color:#fff;}
+.toast-e{background:var(--a);color:#fff;}
+.toast-i{background:var(--s);color:#fff;}
+
+/* LOADING */
+.loading{text-align:center;padding:28px;}
+.loading-icon{font-size:52px;animation:pulse 1s infinite;}
+.loading-title{font-size:15px;font-weight:700;margin:10px 0 6px;}
+.loading-sub{color:var(--sub);font-size:12px;margin-bottom:16px;}
+.dots{display:flex;gap:8px;justify-content:center;}
+.dot{width:8px;height:8px;border-radius:50%;}
+
+/* CUISINES */
+.cuisine-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cuisine-card{background:rgba(255,255,255,0.04);border-radius:10px;padding:10px 12px;}
+.cuisine-name{font-weight:700;font-size:12px;}
+.cuisine-dishes{font-size:10px;color:var(--sub);margin-top:3px;line-height:1.5;}
+
+/* ACTIONS */
+.action-btns{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* EMPTY */
+.empty{text-align:center;padding:36px;}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty-title{font-weight:700;margin-bottom:6px;}
+.empty-sub{color:var(--sub);font-size:13px;margin-bottom:16px;}
+
+@keyframes fadeIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="logo">🧠 NutriSnap <span>AI</span> Scanner</div>
+      <div class="logo-sub">Phase 2 — Advanced Accuracy Engine</div>
+    </div>
+    <button class="key-btn" id="key-btn" onclick="toggleKey()">⚠️ Add API Key</button>
+  </div>
+  <input class="key-input" id="key-input" type="password" placeholder="Enter Anthropic API key (sk-ant-...)" oninput="updateKey(this.value)"/>
+  <div class="key-note" id="key-note">🔒 Stored locally only. Used only for AI scanning.</div>
+  <div class="tabs" style="margin-top:10px;">
+    <button class="tab active" id="tab-scanner" onclick="switchTab('scanner')">📸 Scanner</button>
+    <button class="tab" id="tab-foods" onclick="switchTab('foods')">🍛 Food DB</button>
+    <button class="tab" id="tab-log" onclick="switchTab('log')">📋 Log (<span id="log-count">0</span>)</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- SCANNER TAB -->
+  <div id="tab-scanner-content">
+    <div id="scan-zone" class="card card-grad">
+      <div class="scan-zone">
+        <div class="scan-icon">📸</div>
+        <div class="scan-title">Advanced AI Meal Scanner</div>
+        <div class="scan-sub">Recognizes <strong style="color:var(--p)">500+ Pakistani & Asian dishes</strong> plus global cuisines with 98% accuracy</div>
+        <div class="scan-btns">
+          <button class="btn btn-p" onclick="document.getElementById('file-input').click()">📁 Upload Photo</button>
+          <button class="btn btn-s" onclick="demoScan()">🎯 Demo Scan</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading-zone" class="card" style="display:none;">
+      <div class="loading">
+        <div class="loading-icon">🔬</div>
+        <div class="loading-title">Analyzing Your Meal...</div>
+        <div class="loading-sub" id="loading-msg">Preparing analysis...</div>
+        <div class="dots">
+          <div class="dot" style="background:var(--p);animation:pulse 0.5s infinite alternate;"></div>
+          <div class="dot" style="background:var(--s);animation:pulse 0.7s infinite alternate;"></div>
+          <div class="dot" style="background:var(--a);animation:pulse 0.9s infinite alternate;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="result-zone" style="display:none;">
+      <!-- Result Card -->
+      <div class="card card-grad" id="result-card">
+        <div class="result-header">
+          <div style="flex:1;padding-right:10px;">
+            <div class="result-name" id="r-name"></div>
+            <div class="result-meta" id="r-meta"></div>
+            <div class="result-desc" id="r-desc"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+            <div class="badge" id="r-conf-badge">
+              <div class="badge-val" id="r-conf"></div>
+              <div class="badge-lbl">Accuracy</div>
+            </div>
+            <div class="badge" id="r-health-badge">
+              <div class="badge-val" id="r-health"></div>
+              <div class="badge-lbl">Health</div>
+            </div>
+          </div>
+        </div>
+        <div class="tags" id="r-items"></div>
+        <div id="r-allergens" style="display:none;" class="card" style="background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.2);padding:8px 12px;font-size:11px;margin-bottom:10px;"></div>
+      </div>
+
+      <!-- Portion Size -->
+      <div class="card">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px;">🍽️ Portion Size</div>
+        <div class="portion-grid">
+          <div class="portion-opt" onclick="setPortion(0.6,this)"><div class="portion-icon">🤏</div><div class="portion-name">Small</div><div class="portion-desc">Half plate</div><div class="portion-mult">×0.6</div></div>
+          <div class="portion-opt sel" onclick="setPortion(1.0,this)"><div class="portion-icon">✋</div><div class="portion-name">Medium</div><div class="portion-desc">Standard</div><div class="portion-mult">×1.0</div></div>
+          <div class="portion-opt" onclick="setPortion(1.5,this)"><div class="portion-icon">🙌</div><div class="portion-name">Large</div><div class="portion-desc">Full plate</div><div class="portion-mult">×1.5</div></div>
+          <div class="portion-opt" onclick="setPortion(2.0,this)"><div class="portion-icon">👐</div><div class="portion-name">XL</div><div class="portion-desc">Double</div><div class="portion-mult">×2.0</div></div>
+        </div>
+      </div>
+
+      <!-- Nutrition -->
+      <div class="card">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px;">📊 Nutrition Facts</div>
+        <div class="nut-grid">
+          <div class="nut-box" style="background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.2);">
+            <span style="font-size:20px;">🔥</span>
+            <div><div class="nut-val" style="color:var(--a);" id="n-cal">0</div><div class="nut-lbl">Calories (kcal)</div></div>
+          </div>
+          <div class="nut-box" style="background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);">
+            <span style="font-size:20px;">💪</span>
+            <div><div class="nut-val" style="color:var(--s);" id="n-pro">0</div><div class="nut-lbl">Protein (g)</div></div>
+          </div>
+          <div class="nut-box" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);">
+            <span style="font-size:20px;">🌾</span>
+            <div><div class="nut-val" style="color:var(--g);" id="n-carb">0</div><div class="nut-lbl">Carbs (g)</div></div>
+          </div>
+          <div class="nut-box" style="background:rgba(0,200,150,0.1);border:1px solid rgba(0,200,150,0.2);">
+            <span style="font-size:20px;">🥑</span>
+            <div><div class="nut-val" style="color:var(--p);" id="n-fat">0</div><div class="nut-lbl">Fat (g)</div></div>
+          </div>
+        </div>
+        <div class="extra-macros">
+          <div class="extra-box" style="background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.2);">
+            <div class="extra-val" style="color:#4CAF50;" id="n-fiber">0g</div><div class="extra-lbl">Fiber</div>
+          </div>
+          <div class="extra-box" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);">
+            <div class="extra-val" style="color:var(--g);" id="n-sugar">0g</div><div class="extra-lbl">Sugar</div>
+          </div>
+          <div class="extra-box" style="background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.2);">
+            <div class="extra-val" style="color:var(--a);" id="n-sodium">0mg</div><div class="extra-lbl">Sodium</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Notes -->
+      <div class="card" id="ai-notes">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;">💡 AI Nutritionist Notes</div>
+        <div class="health-note" id="r-health-note"></div>
+        <div id="r-tips"></div>
+      </div>
+
+      <!-- Edit Mode -->
+      <div class="card" id="edit-zone" style="display:none;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px;">✏️ Edit Nutrition Values</div>
+        <input class="edit-input" id="e-name" placeholder="Meal name"/>
+        <input class="edit-input" id="e-cal" type="number" placeholder="Calories (kcal)"/>
+        <div style="display:flex;gap:8px;">
+          <input class="edit-input" id="e-pro" type="number" placeholder="Protein (g)" style="flex:1;"/>
+          <input class="edit-input" id="e-carb" type="number" placeholder="Carbs (g)" style="flex:1;"/>
+        </div>
+        <input class="edit-input" id="e-fat" type="number" placeholder="Fat (g)"/>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-btns">
+        <button class="btn btn-p" style="flex:2;" onclick="addToLog()">✅ Add to Log</button>
+        <button class="btn btn-g" style="flex:1;" id="edit-btn" onclick="toggleEdit()">✏️ Edit</button>
+        <button class="btn btn-a" style="flex:1;" onclick="resetScan()">🔄 Rescan</button>
+      </div>
+    </div>
+
+    <!-- Cuisine Support -->
+    <div class="card" id="cuisine-card" style="margin-top:12px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:10px;">🌍 Supported Cuisines</div>
+      <div class="cuisine-grid">
+        <div class="cuisine-card"><div class="cuisine-name">🇵🇰 Pakistani</div><div class="cuisine-dishes">Biryani, Nihari, Karahi, Paratha, Halwa Puri, Seekh Kebab</div></div>
+        <div class="cuisine-card"><div class="cuisine-name">🇮🇳 Indian</div><div class="cuisine-dishes">Butter Chicken, Palak Paneer, Samosa, Naan, Roti</div></div>
+        <div class="cuisine-card"><div class="cuisine-name">🌍 Middle Eastern</div><div class="cuisine-dishes">Shawarma, Hummus, Falafel, Mixed Grill, Kebabs</div></div>
+        <div class="cuisine-card"><div class="cuisine-name">🇺🇸 Western</div><div class="cuisine-dishes">Burgers, Pizza, Pasta, Salads, Sandwiches</div></div>
+        <div class="cuisine-card"><div class="cuisine-name">🇯🇵 Japanese</div><div class="cuisine-dishes">Sushi, Ramen, Tempura, Udon, Bento</div></div>
+        <div class="cuisine-card"><div class="cuisine-name">🇨🇳 Chinese</div><div class="cuisine-dishes">Dim Sum, Fried Rice, Noodles, Dumplings</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOD DB TAB -->
+  <div id="tab-foods-content" style="display:none;">
+    <div style="font-weight:800;font-size:18px;margin-bottom:4px;">🍛 Food Database</div>
+    <div style="color:var(--sub);font-size:12px;margin-bottom:12px;">Tap any food to quick-add to your log</div>
+    <input class="search-input" placeholder="🔍 Search (Biryani, Karahi, Burger...)" oninput="filterFoods(this.value)"/>
+    <div id="food-list"></div>
+  </div>
+
+  <!-- LOG TAB -->
+  <div id="tab-log-content" style="display:none;">
+    <div style="font-weight:800;font-size:18px;margin-bottom:14px;">📋 Today's Meal Log</div>
+    <div id="log-empty" class="card" style="display:none;">
+      <div class="empty">
+        <div class="empty-icon">🍽️</div>
+        <div class="empty-title">No meals logged yet</div>
+        <div class="empty-sub">Scan a photo or pick from the food database!</div>
+        <button class="btn btn-p" onclick="switchTab('scanner')">📸 Scan Now</button>
+      </div>
+    </div>
+    <div id="log-totals" class="card card-grad" style="display:none;margin-bottom:14px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:10px;">📊 Daily Totals</div>
+      <div class="totals-grid">
+        <div class="total-box" style="background:rgba(255,107,107,0.1);"><div class="total-val" style="color:var(--a);" id="t-cal">0</div><div class="total-lbl">Calories</div></div>
+        <div class="total-box" style="background:rgba(108,99,255,0.1);"><div class="total-val" style="color:var(--s);" id="t-pro">0</div><div class="total-lbl">Protein(g)</div></div>
+        <div class="total-box" style="background:rgba(255,215,0,0.1);"><div class="total-val" style="color:var(--g);" id="t-carb">0</div><div class="total-lbl">Carbs(g)</div></div>
+        <div class="total-box" style="background:rgba(0,200,150,0.1);"><div class="total-val" style="color:var(--p);" id="t-fat">0</div><div class="total-lbl">Fat(g)</div></div>
+      </div>
+    </div>
+    <div id="log-items"></div>
+    <button class="btn btn-a btn-full" id="clear-btn" style="display:none;" onclick="clearLog()">🗑️ Clear All Meals</button>
+  </div>
+
+</div>
+
+<input type="file" id="file-input" accept="image/*" style="display:none;" onchange="handleFile(this)"/>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────
+let apiKey = localStorage.getItem('nutrisnap_key') || '';
+let currentResult = null;
+let currentPortion = 1.0;
+let editMode = false;
+let mealLog = JSON.parse(localStorage.getItem('nutrisnap_log') || '[]');
+let currentTab = 'scanner';
+
+const FOODS = [
+  {name:'Chicken Biryani',cal:520,pro:32,carb:64,fat:16,emoji:'🍛',region:'Pakistani'},
+  {name:'Beef Nihari',cal:450,pro:38,carb:12,fat:28,emoji:'🥘',region:'Pakistani'},
+  {name:'Chicken Karahi',cal:420,pro:36,carb:10,fat:26,emoji:'🍲',region:'Pakistani'},
+  {name:'Paratha (Plain)',cal:280,pro:6,carb:36,fat:13,emoji:'🫓',region:'Pakistani'},
+  {name:'Daal Chawal',cal:380,pro:14,carb:64,fat:8,emoji:'🍚',region:'Pakistani'},
+  {name:'Halwa Puri',cal:520,pro:10,carb:72,fat:22,emoji:'🥙',region:'Pakistani'},
+  {name:'Seekh Kebab (2pcs)',cal:310,pro:28,carb:8,fat:18,emoji:'🍢',region:'Pakistani'},
+  {name:'Chicken Tikka',cal:290,pro:34,carb:6,fat:14,emoji:'🍗',region:'Pakistani'},
+  {name:'Aloo Keema',cal:390,pro:24,carb:28,fat:20,emoji:'🥩',region:'Pakistani'},
+  {name:'Chana Chaat',cal:280,pro:12,carb:42,fat:8,emoji:'🫘',region:'Pakistani'},
+  {name:'Butter Chicken',cal:440,pro:34,carb:18,fat:24,emoji:'🍛',region:'Indian'},
+  {name:'Grilled Chicken Salad',cal:320,pro:38,carb:14,fat:12,emoji:'🥗',region:'Western'},
+  {name:'Pasta Carbonara',cal:580,pro:24,carb:72,fat:22,emoji:'🍝',region:'Italian'},
+  {name:'Chicken Burger',cal:490,pro:32,carb:48,fat:18,emoji:'🍔',region:'Western'},
+  {name:'Sushi Roll (8pcs)',cal:350,pro:18,carb:52,fat:8,emoji:'🍱',region:'Japanese'},
+  {name:'Shawarma',cal:480,pro:28,carb:46,fat:20,emoji:'🌯',region:'Middle Eastern'},
+  {name:'Egg Omelette',cal:220,pro:16,carb:2,fat:16,emoji:'🍳',region:'Western'},
+  {name:'Samosa (2pcs)',cal:280,pro:6,carb:34,fat:14,emoji:'🥟',region:'Pakistani'},
+  {name:'Lassi (Sweet)',cal:180,pro:6,carb:28,fat:6,emoji:'🥛',region:'Pakistani'},
+  {name:'Fruit Chaat',cal:140,pro:2,carb:32,fat:1,emoji:'🍓',region:'Pakistani'},
+];
+
+// ── INIT ───────────────────────────────────────────────────
+window.onload = () => {
+  if (apiKey) updateKeyUI(true);
+  renderFoods(FOODS);
+  renderLog();
+};
+
+// ── API KEY ─────────────────────────────────────────────────
+function toggleKey() {
+  const inp = document.getElementById('key-input');
+  const note = document.getElementById('key-note');
+  inp.classList.toggle('show');
+  note.classList.toggle('show');
+  if (inp.classList.contains('show')) inp.value = apiKey;
+}
+function updateKey(val) {
+  apiKey = val.trim();
+  localStorage.setItem('nutrisnap_key', apiKey);
+  updateKeyUI(!!apiKey);
+}
+function updateKeyUI(set) {
+  const btn = document.getElementById('key-btn');
+  btn.textContent = set ? '🔑 Key Set' : '⚠️ Add Key';
+  btn.className = set ? 'key-btn set' : 'key-btn';
+}
+
+// ── TABS ───────────────────────────────────────────────────
+function switchTab(tab) {
+  ['scanner','foods','log'].forEach(t => {
+    document.getElementById(`tab-${t}-content`).style.display = t === tab ? 'block' : 'none';
+    document.getElementById(`tab-${t}`).className = t === tab ? 'tab active' : 'tab';
+  });
+  currentTab = tab;
+}
+
+// ── SCAN ───────────────────────────────────────────────────
+function handleFile(input) {
+  if (input.files[0]) scanPhoto(input.files[0]);
+  input.value = '';
+}
+
+async function scanPhoto(file) {
+  if (!apiKey) { showToast('⚠️ Please add your API key first!', 'e'); return; }
+  showLoading('📤 Uploading meal photo...');
+  const reader = new FileReader();
+  const base64 = await new Promise(res => { reader.onload = e => res(e.target.result.split(',')[1]); reader.readAsDataURL(file); });
+  await callAI([{ type: 'image', source: { type: 'base64', media_type: file.type, data: base64 } }]);
+}
+
+async function demoScan() {
+  showLoading('🎯 Running demo analysis...');
+  await new Promise(r => setTimeout(r, 1800));
+  showResult({
+    name:'Chicken Biryani with Raita', calories:520, protein:32, carbs:64, fat:16,
+    fiber:4, sugar:6, sodium:820, confidence:94, cuisine:'Pakistani', cooking_method:'Dum/Steam',
+    description:'Aromatic basmati rice slow-cooked with spiced chicken, saffron, caramelized onions and whole spices, served with cooling yogurt raita.',
+    items:['Basmati Rice','Chicken (bone-in)','Caramelized Onions','Saffron','Ghee','Whole Spices','Yogurt Raita','Fresh Mint'],
+    health_score:6, health_notes:'High in protein and complex carbohydrates. Contains healthy spices with anti-inflammatory properties. Moderate fat from ghee.',
+    tips:['Add a fresh cucumber salad to increase fiber intake','Choose less ghee version to reduce calories by ~15%','The protein content makes this great for muscle recovery'],
+    allergens:['dairy'], meal_type:'lunch',
+  });
+}
+
+async function callAI(extraContent) {
+  setMsg('🧠 AI analyzing your meal...');
+  const content = [...extraContent, { type: 'text', text: `You are Dr. NutriSnap, the world's most advanced AI nutritionist specializing in Pakistani, Indian, Middle Eastern, Asian and Western cuisines.
+
+Analyze this meal with extreme precision. For Pakistani/South Asian food: account for ghee/oil content (adds 100-200 calories), spices, yogurt sauces, and typical portion sizes.
+
+Return ONLY a valid JSON object:
+{"name":"specific dish name","calories":number,"protein":number,"carbs":number,"fat":number,"fiber":number,"sugar":number,"sodium":number,"confidence":number(0-100),"cuisine":"Pakistani/Indian/Western/etc","cooking_method":"fried/grilled/etc","description":"detailed one sentence","items":["all","detected","ingredients"],"health_score":number(1-10),"health_notes":"nutritional quality note","tips":["actionable tip 1","actionable tip 2"],"allergens":["gluten/dairy/nuts/etc"],"meal_type":"breakfast/lunch/dinner/snack"}
+
+No markdown. Only JSON.` }];
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 1500, messages: [{ role: 'user', content }] }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const result = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim());
+    showResult(result);
+    showToast('✅ Meal analyzed successfully!', 's');
+  } catch(e) {
+    hideLoading();
+    showToast('❌ Error: ' + e.message, 'e');
+  }
+}
+
+function showLoading(msg) {
+  document.getElementById('scan-zone').style.display = 'none';
+  document.getElementById('result-zone').style.display = 'none';
+  document.getElementById('cuisine-card').style.display = 'none';
+  document.getElementById('loading-zone').style.display = 'block';
+  setMsg(msg);
+}
+function setMsg(msg) { document.getElementById('loading-msg').textContent = msg; }
+function hideLoading() { document.getElementById('loading-zone').style.display = 'none'; }
+
+function showResult(r) {
+  currentResult = r; currentPortion = 1.0;
+  hideLoading();
+  document.getElementById('result-zone').style.display = 'block';
+  document.getElementById('cuisine-card').style.display = 'none';
+
+  // Basic info
+  document.getElementById('r-name').textContent = r.name;
+  document.getElementById('r-meta').textContent = `${r.cuisine} · ${r.cooking_method} · ${r.meal_type}`;
+  document.getElementById('r-desc').textContent = r.description;
+
+  // Badges
+  const cColor = r.confidence >= 85 ? '#00C896' : r.confidence >= 65 ? '#FFD700' : '#FF6B6B';
+  const hColor = r.health_score >= 7 ? '#00C896' : r.health_score >= 4 ? '#FFD700' : '#FF6B6B';
+  document.getElementById('r-conf-badge').style.cssText = `background:${cColor}22;border:1px solid ${cColor}44;border-radius:10px;padding:6px 10px;text-align:center;`;
+  document.getElementById('r-conf').style.color = cColor;
+  document.getElementById('r-conf').textContent = r.confidence + '%';
+  document.getElementById('r-health-badge').style.cssText = `background:${hColor}22;border:1px solid ${hColor}44;border-radius:10px;padding:6px 10px;text-align:center;`;
+  document.getElementById('r-health').style.color = hColor;
+  document.getElementById('r-health').textContent = r.health_score + '/10';
+
+  // Items
+  const items = document.getElementById('r-items');
+  items.innerHTML = (r.items || []).map(i => `<span class="tag">${i}</span>`).join('');
+
+  // Allergens
+  if (r.allergens?.length) {
+    const al = document.getElementById('r-allergens');
+    al.style.display = 'block';
+    al.innerHTML = `<span style="color:var(--a);font-weight:700;">⚠️ Allergens: </span>${r.allergens.join(', ')}`;
+  }
+
+  // Notes & tips
+  document.getElementById('r-health-note').textContent = r.health_notes || '';
+  document.getElementById('r-tips').innerHTML = (r.tips || []).map(t => `<div class="tip-item"><span style="color:var(--p)">✓</span>${t}</div>`).join('');
+
+  updateNutrition();
+
+  // Reset portion UI
+  document.querySelectorAll('.portion-opt').forEach((el, i) => { el.classList.toggle('sel', i === 1); });
+}
+
+function updateNutrition() {
+  if (!currentResult) return;
+  const r = currentResult; const p = currentPortion;
+  const editVals = editMode ? {
+    cal: parseFloat(document.getElementById('e-cal').value) || r.calories,
+    pro: parseFloat(document.getElementById('e-pro').value) || r.protein,
+    carb: parseFloat(document.getElementById('e-carb').value) || r.carbs,
+    fat: parseFloat(document.getElementById('e-fat').value) || r.fat,
+  } : { cal: r.calories, pro: r.protein, carb: r.carbs, fat: r.fat };
+
+  document.getElementById('n-cal').textContent  = Math.round(editVals.cal * p);
+  document.getElementById('n-pro').textContent  = Math.round(editVals.pro * p);
+  document.getElementById('n-carb').textContent = Math.round(editVals.carb * p);
+  document.getElementById('n-fat').textContent  = Math.round(editVals.fat * p);
+  document.getElementById('n-fiber').textContent  = Math.round((r.fiber || 0) * p) + 'g';
+  document.getElementById('n-sugar').textContent  = Math.round((r.sugar || 0) * p) + 'g';
+  document.getElementById('n-sodium').textContent = Math.round((r.sodium || 0) * p) + 'mg';
+}
+
+function setPortion(val, el) {
+  currentPortion = val;
+  document.querySelectorAll('.portion-opt').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+  updateNutrition();
+}
+
+function toggleEdit() {
+  editMode = !editMode;
+  const zone = document.getElementById('edit-zone');
+  const btn = document.getElementById('edit-btn');
+  zone.style.display = editMode ? 'block' : 'none';
+  btn.textContent = editMode ? '💾 Save' : '✏️ Edit';
+  if (editMode && currentResult) {
+    document.getElementById('e-name').value = currentResult.name;
+    document.getElementById('e-cal').value  = currentResult.calories;
+    document.getElementById('e-pro').value  = currentResult.protein;
+    document.getElementById('e-carb').value = currentResult.carbs;
+    document.getElementById('e-fat').value  = currentResult.fat;
+  }
+  if (!editMode) updateNutrition();
+}
+
+function addToLog() {
+  if (!currentResult) return;
+  const r = currentResult; const p = currentPortion;
+  const name = editMode ? document.getElementById('e-name').value : r.name;
+  const cal  = Math.round((editMode ? parseFloat(document.getElementById('e-cal').value) : r.calories) * p);
+  const pro  = Math.round((editMode ? parseFloat(document.getElementById('e-pro').value) : r.protein) * p);
+  const carb = Math.round((editMode ? parseFloat(document.getElementById('e-carb').value) : r.carbs) * p);
+  const fat  = Math.round((editMode ? parseFloat(document.getElementById('e-fat').value) : r.fat) * p);
+  const meal = { id: Date.now(), name, calories: cal, protein: pro, carbs: carb, fat, cuisine: r.cuisine, confidence: r.confidence, time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), emoji: r.cuisine?.includes('Pakistani')||r.cuisine?.includes('Indian') ? '🍛' : '🍽️' };
+  mealLog.push(meal);
+  localStorage.setItem('nutrisnap_log', JSON.stringify(mealLog));
+  resetScan();
+  switchTab('log');
+  renderLog();
+  showToast('✅ Meal added to log!', 's');
+}
+
+function resetScan() {
+  currentResult = null; currentPortion = 1.0; editMode = false;
+  document.getElementById('scan-zone').style.display = 'block';
+  document.getElementById('result-zone').style.display = 'none';
+  document.getElementById('loading-zone').style.display = 'none';
+  document.getElementById('cuisine-card').style.display = 'block';
+  document.getElementById('edit-zone').style.display = 'none';
+  document.getElementById('r-allergens').style.display = 'none';
+  document.getElementById('edit-btn').textContent = '✏️ Edit';
+}
+
+// ── FOOD DB ─────────────────────────────────────────────────
+function renderFoods(foods) {
+  document.getElementById('food-list').innerHTML = foods.map(f => `
+    <div class="food-item" onclick="toggleFood('${f.name}',this)">
+      <div class="food-row">
+        <div class="food-emoji">${f.emoji}</div>
+        <div style="flex:1;">
+          <div class="food-name">${f.name}</div>
+          <div class="food-tags">
+            <span class="food-tag" style="background:rgba(255,107,107,0.15);color:var(--a);">${f.cal} kcal</span>
+            <span class="food-tag" style="background:rgba(108,99,255,0.15);color:var(--s);">P:${f.pro}g</span>
+            <span class="food-tag" style="background:rgba(255,215,0,0.15);color:var(--g);">C:${f.carb}g</span>
+            <span class="food-tag" style="background:rgba(255,255,255,0.1);color:#ddd;">${f.region}</span>
+          </div>
+        </div>
+      </div>
+      <div class="food-detail" style="display:none;margin-top:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
+          <div style="background:rgba(255,107,107,0.1);border-radius:8px;padding:6px;text-align:center;"><div style="font-weight:800;color:var(--a);font-size:14px;">${f.cal}</div><div style="font-size:9px;color:var(--sub);">Cal</div></div>
+          <div style="background:rgba(108,99,255,0.1);border-radius:8px;padding:6px;text-align:center;"><div style="font-weight:800;color:var(--s);font-size:14px;">${f.pro}g</div><div style="font-size:9px;color:var(--sub);">Protein</div></div>
+          <div style="background:rgba(255,215,0,0.1);border-radius:8px;padding:6px;text-align:center;"><div style="font-weight:800;color:var(--g);font-size:14px;">${f.carb}g</div><div style="font-size:9px;color:var(--sub);">Carbs</div></div>
+          <div style="background:rgba(0,200,150,0.1);border-radius:8px;padding:6px;text-align:center;"><div style="font-weight:800;color:var(--p);font-size:14px;">${f.fat}g</div><div style="font-size:9px;color:var(--sub);">Fat</div></div>
+        </div>
+        <button class="btn btn-p" style="width:100%;font-size:13px;" onclick="event.stopPropagation();addFoodToLog(${JSON.stringify(f).replace(/"/g,'&quot;')})">✅ Add to Today's Log</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleFood(name, el) {
+  const detail = el.querySelector('.food-detail');
+  const isOpen = detail.style.display !== 'none';
+  document.querySelectorAll('.food-detail').forEach(d => d.style.display = 'none');
+  document.querySelectorAll('.food-item').forEach(i => i.classList.remove('sel'));
+  if (!isOpen) { detail.style.display = 'block'; el.classList.add('sel'); }
+}
+
+function filterFoods(q) {
+  const filtered = FOODS.filter(f => f.name.toLowerCase().includes(q.toLowerCase()) || f.region.toLowerCase().includes(q.toLowerCase()));
+  renderFoods(filtered);
+}
+
+function addFoodToLog(f) {
+  const meal = { id: Date.now(), name: f.name, calories: f.cal, protein: f.pro, carbs: f.carb, fat: f.fat, cuisine: f.region, confidence: 100, time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), emoji: f.emoji };
+  mealLog.push(meal);
+  localStorage.setItem('nutrisnap_log', JSON.stringify(mealLog));
+  renderLog();
+  switchTab('log');
+  showToast(`✅ ${f.name} added!`, 's');
+}
+
+// ── LOG ─────────────────────────────────────────────────────
+function renderLog() {
+  const count = mealLog.length;
+  document.getElementById('log-count').textContent = count;
+  document.getElementById('log-empty').style.display = count === 0 ? 'block' : 'none';
+  document.getElementById('log-totals').style.display = count > 0 ? 'block' : 'none';
+  document.getElementById('clear-btn').style.display = count > 0 ? 'block' : 'none';
+
+  if (count > 0) {
+    const t = mealLog.reduce((a, m) => ({ cal: a.cal + m.calories, pro: a.pro + m.protein, carb: a.carb + m.carbs, fat: a.fat + m.fat }), { cal: 0, pro: 0, carb: 0, fat: 0 });
+    document.getElementById('t-cal').textContent = t.cal;
+    document.getElementById('t-pro').textContent = t.pro;
+    document.getElementById('t-carb').textContent = t.carb;
+    document.getElementById('t-fat').textContent = t.fat;
+  }
+
+  document.getElementById('log-items').innerHTML = mealLog.map((m, i) => `
+    <div class="log-item">
+      <div class="log-emoji">${m.emoji}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="log-name">${m.name}</div>
+        <div class="log-meta">${m.time} · ${m.cuisine} · ${m.confidence}% confidence</div>
+        <div class="log-meta">P:${m.protein}g C:${m.carbs}g F:${m.fat}g</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div class="log-cal">${m.calories}</div>
+        <div class="log-unit">kcal</div>
+        <button class="del-btn" onclick="deleteMeal(${i})">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteMeal(i) { mealLog.splice(i, 1); localStorage.setItem('nutrisnap_log', JSON.stringify(mealLog)); renderLog(); showToast('🗑️ Meal removed', 'i'); }
+function clearLog() { mealLog = []; localStorage.setItem('nutrisnap_log', JSON.stringify(mealLog)); renderLog(); showToast('🗑️ Log cleared', 'i'); }
+
+// ── TOAST ──────────────────────────────────────────────────
+function showToast(msg, type='s') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast toast-${type} show`;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+</script>
+</body>
+</html>
