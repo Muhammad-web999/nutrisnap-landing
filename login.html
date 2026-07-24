@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Log In — NutriSnap AI</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--primary:#00C896;--secondary:#6C63FF;--dark:#0D0D1A;--card:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.1);--sub:#AAB4C8;}
+  body{background:var(--dark);color:#fff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden;}
+  .bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(108,99,255,0.2),transparent),radial-gradient(ellipse 60% 50% at 80% 80%,rgba(0,200,150,0.15),transparent);}
+  .box{position:relative;z-index:1;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:40px 32px;width:100%;max-width:380px;}
+  .logo{font-size:22px;font-weight:900;text-align:center;margin-bottom:6px;} .logo span{color:var(--primary);}
+  .tag{text-align:center;color:var(--sub);font-size:13px;margin-bottom:28px;}
+  .mode-toggle{display:flex;background:rgba(255,255,255,0.05);border-radius:10px;padding:3px;margin-bottom:22px;}
+  .mode-btn{flex:1;padding:9px;border:none;background:transparent;color:var(--sub);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;}
+  .mode-btn.active{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;}
+  input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:#fff;padding:13px 16px;border-radius:12px;font-size:14px;margin-bottom:12px;outline:none;transition:border-color .2s;}
+  input:focus{border-color:var(--primary);}
+  input::placeholder{color:var(--sub);}
+  button.submit{width:100%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 8px 24px rgba(0,200,150,0.3);transition:transform .2s;}
+  button.submit:hover{transform:translateY(-2px);}
+  button.submit:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+  .err{background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.3);color:#FF6B6B;padding:10px 14px;border-radius:10px;font-size:12px;margin-top:12px;display:none;}
+  .back{display:block;text-align:center;color:var(--sub);font-size:13px;margin-top:20px;text-decoration:none;}
+  .back:hover{color:var(--primary);}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="box">
+  <div class="logo">🌟 NutriSnap <span>AI</span></div>
+  <div class="tag" id="tagline">Log in to continue your journey</div>
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="mode-login" onclick="setMode('login')">Log In</button>
+    <button class="mode-btn" id="mode-signup" onclick="setMode('signup')">Sign Up</button>
+  </div>
+
+  <input type="email" id="email" placeholder="Email address">
+  <input type="password" id="password" placeholder="Password">
+
+  <button class="submit" id="submitBtn" onclick="submit()">Log In</button>
+  <div class="err" id="err"></div>
+
+  <a class="back" href="index.html">← Back to home</a>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNNGTM4qvJew9OR5g_x2ZYPgXJyTxRYrY",
+    authDomain: "nutrisnap-ai-65f78.firebaseapp.com",
+    projectId: "nutrisnap-ai-65f78",
+    storageBucket: "nutrisnap-ai-65f78.firebasestorage.app",
+    messagingSenderId: "1088022249742",
+    appId: "1:1088022249742:web:b2e299dc50cfa20635975f",
+    measurementId: "G-7XG2KFWM4N"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  let mode = 'login';
+  function setMode(m) {
+    mode = m;
+    document.getElementById('mode-login').classList.toggle('active', m === 'login');
+    document.getElementById('mode-signup').classList.toggle('active', m === 'signup');
+    document.getElementById('submitBtn').textContent = m === 'login' ? 'Log In' : 'Create Account';
+    document.getElementById('tagline').textContent = m === 'login' ? 'Log in to continue your journey' : 'Create your account — free to start';
+    document.getElementById('err').style.display = 'none';
+  }
+
+  // Already logged in? Skip straight to the app.
+  auth.onAuthStateChanged(user => { if (user) window.location.href = 'app.html'; });
+
+  async function submit() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const errEl = document.getElementById('err');
+    const btn = document.getElementById('submitBtn');
+    errEl.style.display = 'none';
+    if (!email || !password) { errEl.textContent = 'Enter email and password'; errEl.style.display = 'block'; return; }
+    btn.disabled = true; btn.textContent = 'Please wait...';
+    try {
+      if (mode === 'login') {
+        await auth.signInWithEmailAndPassword(email, password);
+      } else {
+        await auth.createUserWithEmailAndPassword(email, password);
+      }
+      window.location.href = 'app.html';
+    } catch(e) {
+      errEl.textContent = '❌ ' + e.message;
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = mode === 'login' ? 'Log In' : 'Create Account';
+    }
+  }
+
+  document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+</script>
+</body>
+</html>
