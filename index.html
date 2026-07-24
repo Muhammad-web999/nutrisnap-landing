@@ -17,10 +17,11 @@
   /* NAV */
   nav{position:fixed;top:0;width:100%;z-index:999;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;background:rgba(13,13,26,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
   .logo{font-size:22px;font-weight:900;} .logo span{color:var(--primary);}
-  .nav-links{display:flex;gap:28px;list-style:none;}
+  .nav-links{display:flex;gap:28px;list-style:none;align-items:center;}
   .nav-links a{color:var(--sub);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s;}
   .nav-links a:hover{color:var(--primary);}
-  .nav-cta{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;padding:10px 22px;border-radius:50px;font-weight:700;font-size:14px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;}
+  .nav-login{color:#fff !important;font-weight:700 !important;}
+  .nav-cta{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;padding:10px 22px;border-radius:50px;font-weight:700;font-size:14px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-decoration:none;display:inline-block;}
   .nav-cta:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,200,150,0.4);}
 
   /* HERO */
@@ -31,7 +32,7 @@
   .hero h1 .grad{background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
   .hero p{font-size:clamp(15px,2vw,20px);color:var(--sub);max-width:580px;margin:0 auto 36px;line-height:1.7;}
   .hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:60px;}
-  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;padding:16px 32px;border-radius:50px;font-weight:700;font-size:16px;cursor:pointer;box-shadow:0 8px 32px rgba(0,200,150,0.35);transition:all 0.2s;}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;padding:16px 32px;border-radius:50px;font-weight:700;font-size:16px;cursor:pointer;box-shadow:0 8px 32px rgba(0,200,150,0.35);transition:all 0.2s;text-decoration:none;display:inline-block;}
   .btn-primary:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(0,200,150,0.5);}
   .btn-outline{background:transparent;color:#fff;border:1.5px solid var(--border);padding:16px 32px;border-radius:50px;font-weight:700;font-size:16px;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(10px);}
   .btn-outline:hover{border-color:var(--primary);color:var(--primary);}
@@ -110,7 +111,7 @@
   .price-features li{padding:8px 0;font-size:14px;color:var(--sub);display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.04);}
   .price-features li .check{color:var(--primary);font-weight:700;font-size:16px;}
   .price-features li .cross{color:#444;font-size:16px;}
-  .price-btn{width:100%;padding:14px;border-radius:14px;font-weight:700;font-size:15px;cursor:pointer;transition:all 0.2s;border:none;}
+  .price-btn{width:100%;padding:14px;border-radius:14px;font-weight:700;font-size:15px;cursor:pointer;transition:all 0.2s;border:none;text-decoration:none;display:block;text-align:center;}
   .price-btn.filled{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;box-shadow:0 6px 20px rgba(0,200,150,0.3);}
   .price-btn.filled:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,200,150,0.4);}
   .price-btn.outline{background:transparent;color:var(--text);border:1.5px solid var(--border);}
@@ -186,8 +187,9 @@
     <li><a href="#features">Features</a></li>
     <li><a href="#pricing">Pricing</a></li>
     <li><a href="#testimonials">Reviews</a></li>
+    <li><a href="login.html" class="nav-login">Log In</a></li>
   </ul>
-  <button class="nav-cta" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">Get Early Access</button>
+  <a class="nav-cta" href="login.html">Get Early Access</a>
 </nav>
 
 <!-- HERO -->
@@ -200,7 +202,7 @@
     <h1 class="fade-up visible">Snap Your Meal.<br><span class="grad">Know Your Nutrition.</span><br>Transform Your Health.</h1>
     <p class="fade-up visible" style="transition-delay:0.1s">NutriSnap AI uses advanced artificial intelligence to instantly analyze any meal photo and give you accurate calories, macros, and personalized diet advice — in seconds.</p>
     <div class="hero-btns fade-up visible" style="transition-delay:0.2s">
-      <button class="btn-primary" onclick="document.getElementById('waitlist').scrollIntoView({behavior:'smooth'})">📱 Get Early Access — Free</button>
+      <a class="btn-primary" href="login.html">📱 Get Early Access — Free</a>
       <button class="btn-outline" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">▶ See How It Works</button>
     </div>
     <div class="hero-stats fade-up visible" style="transition-delay:0.3s">
@@ -235,7 +237,7 @@
             <div style="flex:1"><div style="font-size:11px;font-weight:700">Chicken Biryani</div><div style="font-size:9px;color:#AAB4C8">01:00 PM · 📸 AI Scanned</div></div>
             <div style="color:#00C896;font-size:11px;font-weight:800">520 kcal</div>
           </div>
-          <button class="scan-btn">📸 Scan New Meal</button>
+          <button class="scan-btn" onclick="window.location.href='login.html'">📸 Scan New Meal</button>
         </div>
       </div>
     </div>
@@ -366,7 +368,7 @@
           <li><span class="cross">✗</span> Barcode scanner</li>
           <li><span class="cross">✗</span> Weekly/monthly history</li>
         </ul>
-        <button class="price-btn outline">Get Started Free</button>
+        <a class="price-btn outline" href="login.html">Get Started Free</a>
       </div>
       <div class="pricing-card popular fade-up">
         <div class="popular-badge">⭐ Most Popular</div>
@@ -382,7 +384,7 @@
           <li><span class="check">✓</span> Meal reminders</li>
           <li><span class="check">✓</span> Priority support</li>
         </ul>
-        <button class="price-btn filled">Start Pro — $9.99/mo</button>
+        <a class="price-btn filled" href="login.html">Start Pro — $9.99/mo</a>
       </div>
       <div class="pricing-card fade-up">
         <div class="price-name">Premium</div>
@@ -397,7 +399,7 @@
           <li><span class="check">✓</span> Family accounts (5 users)</li>
           <li><span class="check">✓</span> White-glove support</li>
         </ul>
-        <button class="price-btn outline">Go Premium</button>
+        <a class="price-btn outline" href="login.html">Go Premium</a>
       </div>
     </div>
   </div>
@@ -434,14 +436,12 @@
   <div class="container">
     <div class="waitlist fade-up">
       <div style="font-size:52px;margin-bottom:16px">🚀</div>
-      <h2>Join 12,000+ People on<br>the Waitlist</h2>
-      <p>Be the first to get NutriSnap AI when it launches on the App Store & Google Play. Early users get <strong style="color:var(--primary)">3 months Pro for free!</strong></p>
-      <div class="waitlist-form">
-        <input class="waitlist-input" type="email" id="emailInput" placeholder="Enter your email address..." />
-        <button class="waitlist-btn" onclick="joinWaitlist()">Join Waitlist 🎉</button>
+      <h2>Ready to Start?</h2>
+      <p>Create your free account and start tracking your meals with AI-powered nutrition analysis today.</p>
+      <div class="hero-btns" style="margin-bottom:0;">
+        <a class="btn-primary" href="login.html">📱 Get Started Free</a>
       </div>
-      <div class="success-msg" id="successMsg">🎉 You're on the list! We'll notify you at launch. Check your email for confirmation.</div>
-      <p class="waitlist-note">🔒 No spam, ever. Unsubscribe anytime. By joining you agree to our Privacy Policy.</p>
+      <p class="waitlist-note" style="margin-top:20px;">🔒 No spam, ever. By joining you agree to our Privacy Policy.</p>
       <div class="store-btns">
         <div class="store-btn"><span class="store-icon">🍎</span><div class="store-text"><div class="store-sub">Coming Soon to</div><div class="store-name">App Store</div></div></div>
         <div class="store-btn"><span class="store-icon">🤖</span><div class="store-text"><div class="store-sub">Coming Soon to</div><div class="store-name">Google Play</div></div></div>
@@ -462,7 +462,7 @@
       <a href="#features">Features</a>
       <a href="#pricing">Pricing</a>
       <a href="#how">How It Works</a>
-      <a href="#">Download App</a>
+      <a href="login.html">Log In</a>
     </div>
     <div class="footer-col">
       <h4>Company</h4>
@@ -496,16 +496,6 @@ const observer = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
 }, { threshold: 0.12 });
 document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
-
-// Waitlist
-function joinWaitlist() {
-  const email = document.getElementById('emailInput').value.trim();
-  if (!email || !email.includes('@')) { alert('Please enter a valid email address!'); return; }
-  document.getElementById('emailInput').value = '';
-  document.getElementById('successMsg').style.display = 'block';
-  setTimeout(() => { document.getElementById('successMsg').style.display = 'none'; }, 6000);
-}
-document.getElementById('emailInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinWaitlist(); });
 
 // Smooth nav highlight
 window.addEventListener('scroll', () => {
