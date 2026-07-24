@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NutriSnap AI — App</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<style>
+  :root {
+    --bg: #0D0D1A; --card: rgba(255,255,255,0.06); --border: rgba(255,255,255,0.1);
+    --sub: #AAB4C8; --p: #00C896; --s: #6C63FF; --a: #FF6B6B; --g: #FFD700; --o: #FF8C00;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: #fff; font-family:'Segoe UI',system-ui,sans-serif; margin:0; max-width:480px; margin:0 auto; }
+  ::-webkit-scrollbar { display:none; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:translateY(0)} }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+  .hidden { display:none !important; }
+  .center-pad { padding: 60px 20px; text-align:center; color:var(--sub); }
+  input { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:12px; border-radius:10px; font-size:14px; margin-bottom:10px; }
+  button.primary { background:linear-gradient(135deg,var(--p),#00C896bb); color:#fff; border:none; border-radius:10px; padding:12px 16px; font-weight:700; font-size:14px; cursor:pointer; width:100%; }
+  .err { background:rgba(255,107,107,0.1); border:1px solid rgba(255,107,107,0.3); color:var(--a); padding:8px 12px; border-radius:8px; font-size:12px; margin-top:10px; display:none; }
+
+  .toast { position:fixed; top:16px; left:50%; transform:translateX(-50%); background:var(--p); color:#fff; padding:10px 20px; border-radius:50px; font-size:13px; font-weight:700; z-index:9999; animation:fadeIn .3s ease; white-space:nowrap; box-shadow:0 8px 24px rgba(0,0,0,.4); display:none; }
+  .toast.err { background:var(--a); }
+  .float-pts { position:fixed; top:40%; left:50%; transform:translateX(-50%); font-size:32px; font-weight:900; color:var(--g); z-index:9998; animation:float 2s ease forwards; pointer-events:none; text-shadow:0 0 20px rgba(255,215,0,.8); display:none; }
+
+  .header { background:rgba(13,13,26,.96); border-bottom:1px solid var(--border); padding:14px 16px 10px; position:sticky; top:0; z-index:100; }
+  .header-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .title { font-size:16px; font-weight:900; } .title span { color:var(--p); }
+  .subtitle { font-size:10px; color:var(--sub); margin-top:1px; cursor:pointer; }
+  .pts-total { font-size:20px; font-weight:900; color:var(--g); text-align:right; }
+  .pts-label { font-size:10px; color:var(--sub); text-align:right; }
+
+  .level-box { background:rgba(255,255,255,0.04); border-radius:12px; padding:10px 14px; }
+  .level-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .level-left { display:flex; align-items:center; gap:8px; }
+  .level-icon { font-size:20px; }
+  .level-title { font-size:12px; font-weight:700; }
+  .level-next { font-size:10px; color:var(--sub); }
+  .level-pct { font-size:12px; color:var(--g); font-weight:700; }
+  .bar-track { height:6px; background:rgba(255,255,255,.08); border-radius:3px; overflow:hidden; }
+  .bar-fill { height:100%; background:linear-gradient(90deg,var(--p),var(--g)); border-radius:3px; transition:width .8s ease; }
+  .bar-caption { display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:var(--sub); }
+
+  .tabs { display:flex; gap:3px; margin-top:10px; background:rgba(255,255,255,0.04); border-radius:10px; padding:3px; overflow-x:auto; }
+  .tab { flex:1; padding:7px 2px; border:none; background:transparent; color:var(--sub); border-radius:8px; font-size:10px; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; }
+  .tab.active { background:linear-gradient(135deg,var(--p),var(--s)); color:#fff; }
+
+  .content { padding:14px 14px 60px; }
+  .glass { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:12px; }
+  .stat-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; }
+  .stat-box { text-align:center; padding:12px; }
+  .stat-box .icon { font-size:24px; } .stat-box .val { font-size:22px; font-weight:900; margin-top:4px; } .stat-box .lbl { font-size:10px; color:var(--sub); }
+
+  .section-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .section-title { font-weight:700; font-size:14px; }
+  .link-btn { background:none; border:none; color:var(--p); font-size:12px; font-weight:700; cursor:pointer; }
+
+  .badge-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .badge-mini { text-align:center; padding:10px 4px; background:rgba(255,215,0,0.06); border:1px solid rgba(255,215,0,0.15); border-radius:12px; }
+  .badge-mini .icon { font-size:26px; } .badge-mini .name { font-size:9px; color:var(--g); font-weight:700; margin-top:4px; } .badge-mini .pts { font-size:9px; color:var(--sub); }
+
+  .lb-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; padding:8px 10px; border-radius:10px; }
+  .lb-row.me { background:rgba(0,200,150,0.08); border:1px solid rgba(0,200,150,0.2); }
+  .avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex-shrink:0; background:linear-gradient(135deg,var(--s),#6C63FFbb); }
+  .lb-name { font-size:13px; font-weight:700; } .lb-streak { font-size:10px; color:var(--sub); }
+  .lb-pts { color:var(--g); font-weight:900; font-size:14px; }
+
+  .quick-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .quick-card { cursor:pointer; padding:14px; border-radius:16px; background:var(--card); border:1px solid var(--border); }
+  .quick-card .icon { font-size:26px; margin-bottom:8px; } .quick-card .name { font-weight:700; font-size:13px; } .quick-card .pts { color:var(--g); font-weight:700; font-size:12px; margin-top:4px; }
+
+  .badge-full { padding:14px; text-align:center; position:relative; }
+  .badge-full.locked { opacity:.4; }
+  .badge-full .icon { font-size:36px; margin-bottom:8px; }
+  .badge-full .name { font-weight:700; font-size:12px; margin-bottom:4px; }
+  .pill { background:rgba(255,215,0,0.13); color:var(--g); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; display:inline-block; }
+
+  .reward-row { display:flex; align-items:center; gap:14px; }
+  .reward-icon { width:52px; height:52px; border-radius:15px; background:rgba(255,255,255,0.06); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
+  .reward-name { font-weight:700; font-size:14px; } .reward-desc { font-size:12px; color:var(--sub); margin-top:2px; }
+  button.claim { background:linear-gradient(135deg,var(--p),#00C896bb); color:#fff; border:none; border-radius:10px; padding:8px 14px; font-weight:700; font-size:12px; cursor:pointer; }
+  button.claim:disabled { background:rgba(255,255,255,0.15); cursor:not-allowed; }
+
+  .notice { background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.2); border-radius:10px; padding:10px 12px; font-size:11px; color:var(--sub); margin-bottom:12px; }
+  .loading { text-align:center; padding:60px 20px; color:var(--sub); }
+
+  .chal-card { display:flex; align-items:flex-start; gap:12px; }
+  .chal-icon { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; background:rgba(255,255,255,0.06); border:1px solid var(--border); }
+  .chal-body { flex:1; }
+  .chal-top { display:flex; justify-content:space-between; align-items:flex-start; }
+  .chal-title { font-weight:700; font-size:14px; }
+  .chal-pts { background:rgba(255,215,0,0.13); color:var(--g); padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700; flex-shrink:0; margin-left:8px; }
+  .chal-expires { font-size:11px; color:var(--sub); margin-top:2px; }
+  .chal-bar-track { height:6px; background:rgba(255,255,255,.08); border-radius:3px; overflow:hidden; margin:8px 0; }
+  .chal-bar-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+  .chal-bottom { display:flex; justify-content:space-between; align-items:center; }
+  .chal-progress-txt { font-size:11px; color:var(--sub); }
+  button.chal-claim { background:linear-gradient(135deg,var(--p),#00C896bb); color:#fff; border:none; border-radius:10px; padding:6px 14px; font-weight:700; font-size:12px; cursor:pointer; }
+
+  .req-row { display:flex; justify-content:space-between; align-items:center; padding:10px; background:rgba(255,255,255,0.04); border-radius:10px; margin-bottom:8px; }
+  .req-name { font-size:13px; font-weight:700; } .req-email { font-size:11px; color:var(--sub); }
+  .btn-sm { border:none; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; cursor:pointer; margin-left:6px; }
+  .btn-sm.accept { background:var(--p); color:#fff; }
+  .btn-sm.decline { background:rgba(255,107,107,0.15); color:var(--a); }
+  .empty-note { color:var(--sub); font-size:12px; text-align:center; padding:12px; }
+
+  /* SCANNER */
+  .scan-zone { text-align:center; padding:28px; }
+  .scan-icon { font-size:56px; margin-bottom:12px; }
+  .scan-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+  .btn { border:none; border-radius:12px; padding:12px 20px; font-weight:700; font-size:14px; cursor:pointer; }
+  .btn-p { background:linear-gradient(135deg,var(--p),var(--s)); color:#fff; box-shadow:0 4px 16px rgba(0,200,150,0.3); }
+  .btn-a { background:rgba(255,107,107,0.15); color:var(--a); border:1px solid rgba(255,107,107,0.3); }
+  .loading-icon { font-size:52px; animation:pulse 1s infinite; }
+  .nut-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; }
+  .nut-box { border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:10px; }
+  .nut-val { font-size:18px; font-weight:800; } .nut-lbl { font-size:10px; color:var(--sub); }
+  .tags { display:flex; flex-wrap:wrap; gap:5px; margin:10px 0; }
+  .tag { background:rgba(0,200,150,0.1); border:1px solid rgba(0,200,150,0.2); color:var(--p); padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="float-pts" id="floatPts"></div>
+<input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFile(this)">
+
+<!-- LOADING -->
+<div id="loadingView" class="loading">Checking your session...</div>
+
+<!-- MAIN APP -->
+<div id="appView" class="hidden">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="title">🌟 NutriSnap <span>AI</span></div>
+        <div class="subtitle" onclick="logout()">👤 <span id="userEmailLabel"></span> · Log out</div>
+      </div>
+      <div>
+        <div class="pts-total" id="headerPoints">⭐ 0</div>
+        <div class="pts-label">Total Points</div>
+      </div>
+    </div>
+    <div class="level-box">
+      <div class="level-row">
+        <div class="level-left">
+          <span class="level-icon" id="levelIcon">🌱</span>
+          <div>
+            <div class="level-title" id="levelTitle">Level 1</div>
+            <div class="level-next" id="levelNext">Next: —</div>
+          </div>
+        </div>
+        <div class="level-pct" id="levelPct">0%</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="levelBar" style="width:0%"></div></div>
+      <div class="bar-caption"><span id="ptsNow">0 pts</span><span id="ptsNeeded">— pts needed</span></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="scanner" onclick="switchTab('scanner')">📸<br>Scan</button>
+      <button class="tab" data-tab="home" onclick="switchTab('home')">🏠<br>Home</button>
+      <button class="tab" data-tab="challenges" onclick="switchTab('challenges')">⚡<br>Goals</button>
+      <button class="tab" data-tab="badges" onclick="switchTab('badges')">🏆<br>Badges</button>
+      <button class="tab" data-tab="leaderboard" onclick="switchTab('leaderboard')">👑<br>Ranks</button>
+      <button class="tab" data-tab="rewards" onclick="switchTab('rewards')">🎁<br>Rewards</button>
+      <button class="tab" data-tab="social" onclick="switchTab('social')">🤝<br>Social</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- SCANNER -->
+    <div class="tab-panel" id="panel-scanner">
+      <div id="scanIdle" class="glass scan-zone">
+        <div class="scan-icon">📸</div>
+        <div style="font-weight:800;font-size:16px;margin-bottom:6px;">Snap Your Meal</div>
+        <div style="color:var(--sub);font-size:12px;">AI-powered recognition for Pakistani &amp; global cuisines</div>
+        <div class="scan-btns">
+          <button class="btn btn-p" onclick="document.getElementById('fileInput').click()">📁 Upload Photo</button>
+        </div>
+      </div>
+
+      <div id="scanLoading" class="glass hidden" style="text-align:center;padding:28px;">
+        <div class="loading-icon">🔬</div>
+        <div style="font-weight:700;margin:10px 0 6px;">Analyzing your meal...</div>
+        <div style="color:var(--sub);font-size:12px;">This takes a few seconds</div>
+      </div>
+
+      <div id="scanResult" class="glass hidden">
+        <div style="font-weight:800;font-size:16px;" id="scanName"></div>
+        <div style="font-size:11px;color:var(--sub);margin-top:2px;" id="scanMeta"></div>
+        <div style="font-size:12px;color:#ddd;margin-top:6px;" id="scanDesc"></div>
+        <div class="tags" id="scanItems"></div>
+        <div class="nut-grid">
+          <div class="nut-box" style="background:rgba(255,107,107,0.1);"><span>🔥</span><div><div class="nut-val" style="color:var(--a);" id="scanCal">0</div><div class="nut-lbl">Calories</div></div></div>
+          <div class="nut-box" style="background:rgba(108,99,255,0.1);"><span>💪</span><div><div class="nut-val" style="color:var(--s);" id="scanPro">0</div><div class="nut-lbl">Protein (g)</div></div></div>
+          <div class="nut-box" style="background:rgba(255,215,0,0.1);"><span>🌾</span><div><div class="nut-val" style="color:var(--g);" id="scanCarb">0</div><div class="nut-lbl">Carbs (g)</div></div></div>
+          <div class="nut-box" style="background:rgba(0,200,150,0.1);"><span>🥑</span><div><div class="nut-val" style="color:var(--p);" id="scanFat">0</div><div class="nut-lbl">Fat (g)</div></div></div>
+        </div>
+        <div class="scan-btns">
+          <button class="btn btn-p" style="flex:2;" onclick="confirmScanLog()">✅ Add to Log</button>
+          <button class="btn btn-a" style="flex:1;" onclick="resetScanner()">🔄 Rescan</button>
+        </div>
+      </div>
+
+      <div class="glass">
+        <div class="section-title" style="margin-bottom:8px;">✏️ Or Log Manually</div>
+        <input type="text" id="manualName" placeholder="Meal name">
+        <input type="number" id="manualCal" placeholder="Calories">
+        <button class="primary" onclick="manualLog()">Log Meal</button>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <div class="tab-panel hidden" id="panel-home">
+      <div class="stat-grid">
+        <div class="glass stat-box"><div class="icon">🔥</div><div class="val" id="statStreak" style="color:var(--a)">0</div><div class="lbl">Day Streak</div></div>
+        <div class="glass stat-box"><div class="icon">🍽️</div><div class="val" id="statMeals" style="color:var(--p)">0</div><div class="lbl">Total Meals</div></div>
+        <div class="glass stat-box"><div class="icon">🏆</div><div class="val" id="statBadges" style="color:var(--g)">0</div><div class="lbl">Badges</div></div>
+      </div>
+      <div class="glass">
+        <div class="section-head"><div class="section-title">🏆 Recent Badges</div><button class="link-btn" onclick="switchTab('badges')">See All →</button></div>
+        <div class="badge-grid" id="recentBadges"></div>
+      </div>
+      <div class="glass">
+        <div class="section-head"><div class="section-title">👑 Leaderboard</div><button class="link-btn" onclick="switchTab('leaderboard')">See All →</button></div>
+        <div id="lbPreview"></div>
+      </div>
+    </div>
+
+    <!-- CHALLENGES -->
+    <div class="tab-panel hidden" id="panel-challenges">
+      <div id="challengesList"></div>
+    </div>
+
+    <!-- BADGES -->
+    <div class="tab-panel hidden" id="panel-badges">
+      <div class="section-title" style="margin-bottom:4px;" id="badgeCount">0/0 badges earned</div>
+      <div style="height:10px;"></div>
+      <div class="badge-grid" style="grid-template-columns:1fr 1fr;" id="allBadgesGrid"></div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="tab-panel hidden" id="panel-leaderboard">
+      <div class="glass" id="lbFull"></div>
+    </div>
+
+    <!-- REWARDS -->
+    <div class="tab-panel hidden" id="panel-rewards">
+      <div class="glass" style="background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.2); display:flex; justify-content:space-between; align-items:center;">
+        <div><div style="font-weight:700;">Your Balance</div><div style="font-size:10px;color:var(--sub);">Available to spend</div></div>
+        <div style="font-size:28px;font-weight:900;color:var(--g);" id="rewardsBalance">⭐ 0</div>
+      </div>
+      <div id="rewardsList"></div>
+    </div>
+
+    <!-- SOCIAL -->
+    <div class="tab-panel hidden" id="panel-social">
+      <div class="glass">
+        <div class="section-title" style="margin-bottom:10px;">➕ Add a Friend</div>
+        <input type="email" id="friendEmailInput" placeholder="Friend's email">
+        <button class="primary" onclick="sendFriendRequest()">Send Request</button>
+        <div class="err" id="socialAddErr" style="display:none;"></div>
+      </div>
+      <div class="glass">
+        <div class="section-head"><div class="section-title">📨 Friend Requests</div></div>
+        <div id="socialRequests"></div>
+      </div>
+      <div class="glass">
+        <div class="section-head"><div class="section-title">👥 My Friends</div></div>
+        <div id="socialFriends"></div>
+      </div>
+      <div class="glass">
+        <div class="section-head"><div class="section-title">👑 Friends Leaderboard</div></div>
+        <div id="socialLeaderboard"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNNGTM4qvJew9OR5g_x2ZYPgXJyTxRYrY",
+    authDomain: "nutrisnap-ai-65f78.firebaseapp.com",
+    projectId: "nutrisnap-ai-65f78",
+    storageBucket: "nutrisnap-ai-65f78.firebasestorage.app",
+    messagingSenderId: "1088022249742",
+    appId: "1:1088022249742:web:b2e299dc50cfa20635975f",
+    measurementId: "G-7XG2KFWM4N"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const API_BASE = "https://nutrisnap-ai-backend-production.up.railway.app";
+  let latestData = null;
+  let currentScan = null;
+
+  function show(id){ document.getElementById(id).classList.remove('hidden'); }
+  function hide(id){ document.getElementById(id).classList.add('hidden'); }
+  function toast(msg, isErr) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast' + (isErr ? ' err' : '');
+    t.style.display = 'block';
+    setTimeout(()=> t.style.display='none', 3000);
+  }
+  function floatPts(pts) {
+    const f = document.getElementById('floatPts');
+    f.textContent = '+' + pts + ' ⭐'; f.style.display = 'block';
+    setTimeout(()=> f.style.display='none', 2000);
+  }
+  function logout() { auth.signOut().then(()=> window.location.href = 'login.html'); }
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      document.getElementById('userEmailLabel').textContent = user.email;
+      await loadStats();
+      show('appView');
+    } else {
+      window.location.href = 'login.html';
+    }
+  });
+
+  async function authedFetch(path, options={}) {
+    const user = auth.currentUser;
+    const token = await user.getIdToken();
+    const res = await fetch(API_BASE + path, { ...options, headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, ...(options.headers||{}) } });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  }
+
+  async function loadStats() {
+    try {
+      const data = await authedFetch('/api/v1/gamification/me');
+      latestData = data.data;
+      renderAll();
+      await loadChallenges();
+      await loadSocial();
+      hide('loadingView');
+    } catch(e) {
+      if (e.message === 'User not found') {
+        try {
+          await authedFetch('/api/v1/auth/sync', { method:'POST', body: JSON.stringify({ name: auth.currentUser.email.split('@')[0] }) });
+          return loadStats();
+        } catch(e2) { toast('❌ ' + e2.message, true); hide('loadingView'); }
+      } else {
+        toast('❌ ' + e.message, true); hide('loadingView');
+      }
+    }
+  }
+
+  function switchTab(id) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    document.getElementById('panel-'+id).classList.remove('hidden');
+  }
+
+  // ── SCANNER ──────────────────────────────────────────────
+  function handleFile(input) {
+    if (input.files[0]) scanPhoto(input.files[0]);
+    input.value = '';
+  }
+
+  async function scanPhoto(file) {
+    hide('scanIdle'); hide('scanResult'); show('scanLoading');
+    try {
+      const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(',')[1]);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      const data = await authedFetch('/api/v1/ai/scan-meal', {
+        method: 'POST',
+        body: JSON.stringify({ image_base64: base64, media_type: file.type })
+      });
+      currentScan = data.data;
+      showScanResult(currentScan);
+    } catch(e) {
+      toast('❌ ' + e.message, true);
+      resetScanner();
+    }
+  }
+
+  function showScanResult(r) {
+    hide('scanLoading'); hide('scanIdle'); show('scanResult');
+    document.getElementById('scanName').textContent = r.name;
+    document.getElementById('scanMeta').textContent = `${r.cuisine} · ${r.cooking_method} · ${r.confidence}% confidence`;
+    document.getElementById('scanDesc').textContent = r.description;
+    document.getElementById('scanItems').innerHTML = (r.items||[]).map(i => `<span class="tag">${i}</span>`).join('');
+    document.getElementById('scanCal').textContent = Math.round(r.calories);
+    document.getElementById('scanPro').textContent = Math.round(r.protein);
+    document.getElementById('scanCarb').textContent = Math.round(r.carbs);
+    document.getElementById('scanFat').textContent = Math.round(r.fat);
+  }
+
+  function resetScanner() {
+    currentScan = null;
+    hide('scanLoading'); hide('scanResult'); show('scanIdle');
+  }
+
+  async function confirmScanLog() {
+    if (!currentScan) return;
+    await logMeal(currentScan.name, currentScan.calories, currentScan.protein, currentScan.carbs, currentScan.fat, 'ai');
+    resetScanner();
+  }
+
+  async function manualLog() {
+    const name = document.getElementById('manualName').value.trim();
+    const cal = document.getElementById('manualCal').value;
+    if (!name || !cal) { toast('Enter a meal name and calories', true); return; }
+    await logMeal(name, cal, 0, 0, 0, 'manual');
+    document.getElementById('manualName').value = ''; document.getElementById('manualCal').value = '';
+  }
+
+  async function logMeal(name, calories, protein, carbs, fat, source) {
+    try {
+      const data = await authedFetch('/api/v1/meals', {
+        method:'POST',
+        body: JSON.stringify({ name, calories, protein_g:protein, carbs_g:carbs, fat_g:fat, meal_type:'snack', source })
+      });
+      const g = data.gamification;
+      if (g) {
+        floatPts(g.pointsGained);
+        toast(`+${g.pointsGained} pts! Streak: ${g.streak} days` + (g.newlyEarned.length? ` · New badge: ${g.newlyEarned[0].title}`:''));
+      } else {
+        toast('✅ Meal logged!');
+      }
+      await loadStats();
+    } catch(e) { toast('❌ ' + e.message, true); }
+  }
+
+  // ── GAMIFICATION render ──────────────────────────────────
+  function renderAll() {
+    const d = latestData;
+    document.getElementById('headerPoints').textContent = '⭐ ' + d.points.toLocaleString();
+    document.getElementById('levelIcon').textContent = d.level.icon;
+    document.getElementById('levelTitle').textContent = `Level ${d.level.level} — ${d.level.title}`;
+    document.getElementById('levelNext').textContent = `Next: ${d.nextLevel.title} (${d.nextLevel.icon})`;
+    const range = d.nextLevel.minPoints - d.level.minPoints;
+    const pct = range > 0 ? Math.min(Math.round(((d.points - d.level.minPoints) / range) * 100), 100) : 100;
+    document.getElementById('levelPct').textContent = pct + '%';
+    document.getElementById('levelBar').style.width = pct + '%';
+    document.getElementById('ptsNow').textContent = d.points.toLocaleString() + ' pts';
+    document.getElementById('ptsNeeded').textContent = d.nextLevel.minPoints.toLocaleString() + ' pts needed';
+
+    document.getElementById('statStreak').textContent = d.streak;
+    document.getElementById('statMeals').textContent = d.totalMeals;
+    document.getElementById('statBadges').textContent = d.badges.length;
+
+    document.getElementById('recentBadges').innerHTML = d.badges.length
+      ? d.badges.slice(0,8).map(b => `<div class="badge-mini"><div class="icon">${b.icon}</div><div class="name">${b.title}</div><div class="pts">+${b.points}pts</div></div>`).join('')
+      : `<div style="grid-column:1/-1;text-align:center;color:var(--sub);font-size:12px;padding:16px;">Log meals to earn badges! 🏆</div>`;
+
+    const lbHtml = (arr) => arr.map(u => `
+      <div class="lb-row ${u.isMe ? 'me' : ''}">
+        <div style="width:24px;text-align:center;">${u.rank<=3 ? ['🥇','🥈','🥉'][u.rank-1] : '#'+u.rank}</div>
+        <div class="avatar">${u.name.slice(0,2).toUpperCase()}</div>
+        <div style="flex:1;"><div class="lb-name">${u.name}</div><div class="lb-streak">🔥 ${u.streak||0} day streak</div></div>
+        <div class="lb-pts">⭐ ${u.points.toLocaleString()}</div>
+      </div>`).join('');
+    document.getElementById('lbPreview').innerHTML = lbHtml(d.leaderboard.slice(0,3));
+    document.getElementById('lbFull').innerHTML = lbHtml(d.leaderboard);
+
+    document.getElementById('badgeCount').textContent = `${d.badges.length}/${d.allBadges.length} badges earned`;
+    const earnedIds = new Set(d.badges.map(b=>b.id));
+    document.getElementById('allBadgesGrid').innerHTML = d.allBadges.map(b => {
+      const earned = earnedIds.has(b.id);
+      let progressLabel = '';
+      if (!earned) {
+        const val = b.type==='streak'?d.streak : b.type==='meals'?d.totalMeals : b.type==='scans'?d.totalScans : b.type==='goals'?d.goalsHit : 0;
+        progressLabel = `<div style="margin-top:8px;font-size:10px;color:var(--sub);">${val}/${b.req}</div>`;
+      }
+      return `<div class="glass badge-full ${earned?'':'locked'}">
+        <div class="icon">${b.icon}</div>
+        <div class="name">${b.title}</div>
+        <div class="pill">+${b.points} pts</div>
+        ${progressLabel}
+      </div>`;
+    }).join('');
+
+    document.getElementById('rewardsBalance').textContent = '⭐ ' + d.points.toLocaleString();
+    document.getElementById('rewardsList').innerHTML = d.rewards.map(r => {
+      const canAfford = d.points >= r.cost;
+      return `<div class="glass"><div class="reward-row">
+        <div class="reward-icon">🎁</div>
+        <div style="flex:1;"><div class="reward-name">${r.title}</div><div class="reward-desc">${r.cost} points</div></div>
+        <button class="claim" ${canAfford?'':'disabled'} onclick="claimReward('${r.id}')">${canAfford?'Claim':'Need '+(r.cost-d.points)+' more'}</button>
+      </div></div>`;
+    }).join('');
+  }
+
+  async function loadChallenges() {
+    try {
+      const data = await authedFetch('/api/v1/gamification/challenges');
+      renderChallenges(data.data);
+    } catch(e) {
+      document.getElementById('challengesList').innerHTML = `<div class="notice">❌ Couldn't load challenges: ${e.message}</div>`;
+    }
+  }
+
+  function renderChallenges(challenges) {
+    const colors = { p: 'var(--p)', s: 'var(--s)', a: 'var(--a)', g: 'var(--g)', o: 'var(--o)' };
+    const colorCycle = ['p','s','g','a','o','s'];
+    document.getElementById('challengesList').innerHTML = challenges.map((c, i) => {
+      const pct = Math.min(Math.round((c.progress / c.target) * 100), 100);
+      const done = c.progress >= c.target;
+      const color = colors[colorCycle[i % colorCycle.length]];
+      let actionHtml;
+      if (c.claimed) actionHtml = `<div style="color:var(--p);font-size:12px;font-weight:700;">✅ Claimed!</div>`;
+      else if (done) actionHtml = `<button class="chal-claim" onclick="claimChallenge('${c.id}')">🎁 Claim!</button>`;
+      else actionHtml = `<div style="color:var(--sub);font-size:11px;">${pct}%</div>`;
+      return `<div class="glass" style="${c.claimed ? 'opacity:.7;' : ''}">
+        <div class="chal-card">
+          <div class="chal-icon" style="background:${color}22;border-color:${color}44;">${c.icon}</div>
+          <div class="chal-body">
+            <div class="chal-top"><div class="chal-title">${c.title}</div><div class="chal-pts">+${c.points}</div></div>
+            <div class="chal-expires">⏰ ${c.expires}</div>
+            <div class="chal-bar-track"><div class="chal-bar-fill" style="width:${pct}%;background:${done?'linear-gradient(90deg,var(--p),var(--g))':color};"></div></div>
+            <div class="chal-bottom"><div class="chal-progress-txt">${c.progress}/${c.target} completed</div>${actionHtml}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function claimChallenge(challengeId) {
+    try {
+      const data = await authedFetch('/api/v1/gamification/claim-challenge', { method:'POST', body: JSON.stringify({ challenge_id: challengeId }) });
+      floatPts(data.points); toast(data.message);
+      await loadStats();
+    } catch(e) { toast('❌ ' + e.message, true); }
+  }
+
+  async function claimReward(rewardId) {
+    try {
+      const data = await authedFetch('/api/v1/gamification/claim-reward', { method:'POST', body: JSON.stringify({ reward_id: rewardId }) });
+      toast('🎉 ' + data.message);
+      await loadStats();
+    } catch(e) { toast('❌ ' + e.message, true); }
+  }
+
+  // ── SOCIAL ───────────────────────────────────────────────
+  async function loadSocial() { await Promise.all([loadSocialRequests(), loadSocialFriends(), loadSocialLeaderboard()]); }
+
+  async function sendFriendRequest() {
+    const email = document.getElementById('friendEmailInput').value.trim();
+    const errEl = document.getElementById('socialAddErr');
+    errEl.style.display = 'none';
+    if (!email) return;
+    try {
+      const data = await authedFetch('/api/v1/social/friends/request', { method:'POST', body: JSON.stringify({ email }) });
+      toast('✅ ' + data.message);
+      document.getElementById('friendEmailInput').value = '';
+    } catch(e) { errEl.textContent = '❌ ' + e.message; errEl.style.display = 'block'; }
+  }
+
+  async function loadSocialRequests() {
+    try {
+      const data = await authedFetch('/api/v1/social/friends/requests');
+      document.getElementById('socialRequests').innerHTML = data.data.length
+        ? data.data.map(r => `<div class="req-row">
+            <div><div class="req-name">${r.name}</div><div class="req-email">${r.email}</div></div>
+            <div><button class="btn-sm accept" onclick="respondRequest(${r.id},'accept')">Accept</button>
+            <button class="btn-sm decline" onclick="respondRequest(${r.id},'decline')">Decline</button></div>
+          </div>`).join('')
+        : `<div class="empty-note">No pending requests</div>`;
+    } catch(e) { document.getElementById('socialRequests').innerHTML = `<div class="empty-note">❌ ${e.message}</div>`; }
+  }
+
+  async function respondRequest(id, action) {
+    try {
+      const data = await authedFetch('/api/v1/social/friends/respond', { method:'POST', body: JSON.stringify({ request_id: id, action }) });
+      toast(data.message);
+      await loadSocial();
+    } catch(e) { toast('❌ ' + e.message, true); }
+  }
+
+  async function loadSocialFriends() {
+    try {
+      const data = await authedFetch('/api/v1/social/friends');
+      document.getElementById('socialFriends').innerHTML = data.data.length
+        ? data.data.map(f => `<div class="lb-row">
+            <div class="avatar">${f.name.slice(0,2).toUpperCase()}</div>
+            <div style="flex:1;"><div class="lb-name">${f.name}</div><div class="lb-streak">🔥 ${f.streak_days||0} day streak</div></div>
+            <div class="lb-pts">⭐ ${(f.points||0).toLocaleString()}</div>
+          </div>`).join('')
+        : `<div class="empty-note">No friends yet — send a request above!</div>`;
+    } catch(e) { document.getElementById('socialFriends').innerHTML = `<div class="empty-note">❌ ${e.message}</div>`; }
+  }
+
+  async function loadSocialLeaderboard() {
+    try {
+      const data = await authedFetch('/api/v1/social/leaderboard');
+      document.getElementById('socialLeaderboard').innerHTML = data.data.map(u => `<div class="lb-row ${u.isMe?'me':''}">
+          <div style="width:24px;text-align:center;">${u.rank<=3?['🥇','🥈','🥉'][u.rank-1]:'#'+u.rank}</div>
+          <div class="avatar">${u.name.slice(0,2).toUpperCase()}</div>
+          <div style="flex:1;"><div class="lb-name">${u.name}</div><div class="lb-streak">🔥 ${u.streak||0} day streak</div></div>
+          <div class="lb-pts">⭐ ${u.points.toLocaleString()}</div>
+        </div>`).join('');
+    } catch(e) { document.getElementById('socialLeaderboard').innerHTML = `<div class="empty-note">❌ ${e.message}</div>`; }
+  }
+</script>
+</body>
+</html>
