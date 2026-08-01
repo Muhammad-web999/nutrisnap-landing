@@ -130,6 +130,26 @@
   .macro-bar-track { height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; }
   .macro-bar-fill { height:100%; border-radius:4px; }
 
+  /* Concentric rings */
+  .rings-wrap { display:flex; align-items:center; gap:20px; }
+  .rings-legend { flex:1; display:flex; flex-direction:column; gap:10px; }
+  .ring-legend-item { display:flex; align-items:center; gap:8px; font-size:12px; }
+  .ring-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .ring-legend-val { margin-left:auto; font-weight:700; }
+
+  /* Stacked calorie bar */
+  .stacked-bar-track { height:26px; background:rgba(255,255,255,0.06); border-radius:13px; overflow:hidden; display:flex; position:relative; }
+  .stacked-bar-seg { height:100%; transition:width .5s ease; }
+  .stacked-bar-goal-line { position:absolute; top:-4px; bottom:-4px; width:2px; background:#fff; opacity:.6; }
+  .stacked-bar-legend { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+  .stacked-legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--sub); }
+
+  /* BMI bi-directional slider */
+  .bmi-slider-track { position:relative; height:10px; border-radius:6px; margin:20px 0 8px; background:linear-gradient(90deg, #6C63FF 0 20%, #00C896 20% 50%, #FFD700 50% 75%, #FF6B6B 75% 100%); }
+  .bmi-slider-marker { position:absolute; top:-8px; width:26px; height:26px; border-radius:50%; background:#0D0D1A; border:3px solid #fff; transform:translateX(-50%); box-shadow:0 2px 8px rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; }
+  .bmi-slider-labels { display:flex; justify-content:space-between; font-size:9px; color:var(--sub); }
+  .bmi-status-pill { display:inline-block; margin-top:12px; padding:5px 14px; border-radius:20px; font-size:12px; font-weight:700; }
+
   /* SCANNER */
   .scan-zone { text-align:center; padding:28px; }
   .scan-icon { font-size:56px; margin-bottom:12px; }
@@ -710,17 +730,70 @@
       </div>`;
     }).join('');
 
-    const totalMacros = d.avgProtein + d.avgCarbs + d.avgFat || 1;
-    const macroBar = (label, val, color) => `
-      <div class="macro-bar-row">
-        <div class="macro-bar-head"><span>${label}</span><span style="color:${color};font-weight:700;">${val}g</span></div>
-        <div class="macro-bar-track"><div class="macro-bar-fill" style="width:${Math.round((val/totalMacros)*100)}%; background:${color};"></div></div>
-      </div>`;
-
     const mealTypeIcons = { breakfast: '🌅', lunch: '🍽️', dinner: '🌙', snack: '🍿' };
     const mealTypeHtml = d.mealTypeBreakdown.length
       ? d.mealTypeBreakdown.map(m => `<div class="stat"><b style="display:block;font-size:18px;color:var(--p);">${m.count}</b>${mealTypeIcons[m.type]||'🍴'} ${m.type}</div>`).join('')
       : `<div class="empty-note">No meals logged in the last 30 days</div>`;
+
+    // ── 1. Concentric rings — today's macros vs goal ──
+    const ringDefs = [
+      { key:'protein', label:'Protein', color:'#6C63FF', r:50 },
+      { key:'carbs',   label:'Carbs',   color:'#FFD700', r:38 },
+      { key:'fat',     label:'Fat',     color:'#00C896', r:26 },
+    ];
+    const ringsSvg = ringDefs.map(rg => {
+      const val = d.today[rg.key], goalVal = d.macroGoals[rg.key] || 1;
+      const pct = Math.min(val / goalVal, 1);
+      const circ = 2 * Math.PI * rg.r;
+      const offset = circ * (1 - pct);
+      return `
+        <circle cx="60" cy="60" r="${rg.r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+        <circle cx="60" cy="60" r="${rg.r}" fill="none" stroke="${rg.color}" stroke-width="8" stroke-linecap="round"
+          stroke-dasharray="${circ}" stroke-dashoffset="${offset}" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .6s ease;"/>`;
+    }).join('');
+    const ringsLegend = ringDefs.map(rg => {
+      const val = d.today[rg.key], goalVal = d.macroGoals[rg.key] || 1;
+      return `<div class="ring-legend-item"><span class="ring-dot" style="background:${rg.color};"></span>${rg.label}<span class="ring-legend-val">${val}g / ${goalVal}g</span></div>`;
+    }).join('');
+
+    // ── 2. Stacked calorie bar — today by meal type ──
+    const mtColors = { breakfast:'#FFD700', lunch:'#00C896', dinner:'#6C63FF', snack:'#FF8C00' };
+    const scaleMax = Math.max(d.goal, d.today.calories) * 1.05 || 1;
+    const goalLinePct = Math.min((d.goal / scaleMax) * 100, 100);
+    const stackedSegs = d.today.byMealType.map(m =>
+      `<div class="stacked-bar-seg" style="width:${(m.calories/scaleMax)*100}%; background:${mtColors[m.type]||'var(--sub)'};" title="${m.type}: ${m.calories} kcal"></div>`
+    ).join('');
+    const stackedLegend = d.today.byMealType.length
+      ? d.today.byMealType.map(m => `<div class="stacked-legend-item"><span class="ring-dot" style="background:${mtColors[m.type]||'var(--sub)'};"></span>${mealTypeIcons[m.type]||''} ${m.type}: ${m.calories} kcal</div>`).join('')
+      : `<div class="empty-note">No meals logged today yet</div>`;
+
+    // ── 3. BMI bi-directional slider ──
+    let bmiHtml = `<div class="empty-note">Add your weight & height in your profile to see this</div>`;
+    if (d.bmi) {
+      const bmiToPct = (b) => {
+        const pts = [[15,0],[18.5,20],[25,50],[30,75],[40,100]];
+        if (b <= pts[0][0]) return 0;
+        if (b >= pts[pts.length-1][0]) return 100;
+        for (let i=0;i<pts.length-1;i++) {
+          if (b >= pts[i][0] && b <= pts[i+1][0]) {
+            const [x1,y1] = pts[i], [x2,y2] = pts[i+1];
+            return y1 + (b-x1)*(y2-y1)/(x2-x1);
+          }
+        }
+        return 50;
+      };
+      const pct = bmiToPct(d.bmi);
+      const statusColor = { Underweight:'#6C63FF', Healthy:'#00C896', Overweight:'#FFD700', Obese:'#FF6B6B' }[d.bmiStatus] || 'var(--sub)';
+      bmiHtml = `
+        <div style="text-align:center; font-size:28px; font-weight:900;">${d.bmi}</div>
+        <div style="text-align:center; font-size:11px; color:var(--sub); margin-bottom:6px;">BMI · ${d.weightKg}kg / ${d.heightCm}cm</div>
+        <div class="bmi-slider-track">
+          <div class="bmi-slider-marker" style="left:${pct}%;">${d.bmi}</div>
+        </div>
+        <div class="bmi-slider-labels"><span>Under</span><span>Healthy</span><span>Over</span><span>Obese</span></div>
+        <div style="text-align:center;"><span class="bmi-status-pill" style="background:${statusColor}22; color:${statusColor};">${d.bmiStatus}</span></div>
+      `;
+    }
 
     document.getElementById('analyticsContent').innerHTML = `
       <div class="analytics-stat-grid">
@@ -731,20 +804,32 @@
       </div>
 
       <div class="glass">
+        <div class="section-title" style="margin-bottom:10px;">🎯 Today's Macros</div>
+        <div class="rings-wrap">
+          <svg width="120" height="120" viewBox="0 0 120 120">${ringsSvg}</svg>
+          <div class="rings-legend">${ringsLegend}</div>
+        </div>
+      </div>
+
+      <div class="glass">
+        <div class="section-head"><div class="section-title">🔥 Today's Calorie Budget</div><div style="font-size:12px;color:var(--sub);">${d.today.calories} / ${d.goal.toLocaleString()} kcal</div></div>
+        <div class="stacked-bar-track">${stackedSegs}<div class="stacked-bar-goal-line" style="left:${goalLinePct}%;" title="Goal"></div></div>
+        <div class="stacked-bar-legend">${stackedLegend}</div>
+      </div>
+
+      <div class="glass">
+        <div class="section-title" style="margin-bottom:4px;">⚖️ Health Status</div>
+        ${bmiHtml}
+      </div>
+
+      <div class="glass">
         <div class="section-title" style="margin-bottom:4px;">📈 Last 14 Days — Calories</div>
         <div style="font-size:11px;color:var(--sub);margin-bottom:8px;">Goal: ${d.goal.toLocaleString()} kcal/day · 🟢 on target · 🔵 under · 🔴 over</div>
         <div class="bar-chart">${barsHtml || '<div class="empty-note">No data yet</div>'}</div>
       </div>
 
       <div class="glass">
-        <div class="section-title" style="margin-bottom:12px;">🥗 Average Daily Macros</div>
-        ${macroBar('Protein', d.avgProtein, 'var(--s)')}
-        ${macroBar('Carbs', d.avgCarbs, 'var(--g)')}
-        ${macroBar('Fat', d.avgFat, 'var(--p)')}
-      </div>
-
-      <div class="glass">
-        <div class="section-title" style="margin-bottom:10px;">🍽️ Meal Type Breakdown</div>
+        <div class="section-title" style="margin-bottom:10px;">🍽️ Meal Type Breakdown (30d)</div>
         <div class="stat-grid" style="grid-template-columns:repeat(${Math.max(d.mealTypeBreakdown.length,1)},1fr);">${mealTypeHtml}</div>
       </div>
     `;
