@@ -117,6 +117,19 @@
   .chat-bubble.user .chat-text { background:linear-gradient(135deg,var(--p),var(--s)); border:none; color:#fff; }
   .chat-bubble.loading .chat-text { color:var(--sub); font-style:italic; }
 
+  /* ANALYTICS */
+  .analytics-stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  .analytics-stat { text-align:center; padding:14px; }
+  .analytics-stat .val { font-size:24px; font-weight:900; } .analytics-stat .lbl { font-size:11px; color:var(--sub); margin-top:2px; }
+  .bar-chart { display:flex; align-items:flex-end; gap:4px; height:140px; margin-top:10px; }
+  .bar-chart-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+  .bar-chart-bar { width:100%; border-radius:4px 4px 0 0; min-height:2px; transition:height .5s ease; }
+  .bar-chart-lbl { font-size:8px; color:var(--sub); margin-top:4px; white-space:nowrap; }
+  .macro-bar-row { margin-bottom:12px; }
+  .macro-bar-head { display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; }
+  .macro-bar-track { height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; }
+  .macro-bar-fill { height:100%; border-radius:4px; }
+
   /* SCANNER */
   .scan-zone { text-align:center; padding:28px; }
   .scan-icon { font-size:56px; margin-bottom:12px; }
@@ -177,6 +190,7 @@
       <button class="tab" data-tab="rewards" onclick="switchTab('rewards')">🎁<br>Rewards</button>
       <button class="tab" data-tab="social" onclick="switchTab('social')">🤝<br>Social</button>
       <button class="tab" data-tab="chat" onclick="switchTab('chat')">💬<br>Chat</button>
+      <button class="tab" data-tab="analytics" onclick="switchTab('analytics')">📊<br>Stats</button>
     </div>
   </div>
 
@@ -304,6 +318,13 @@
         </div>
       </div>
     </div>
+
+    <!-- ANALYTICS -->
+    <div class="tab-panel hidden" id="panel-analytics">
+      <div id="analyticsContent">
+        <div class="empty-note">Loading your analytics...</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -364,6 +385,7 @@
       renderAll();
       await loadChallenges();
       await loadSocial();
+      await loadAnalytics();
       hide('loadingView');
     } catch(e) {
       if (e.message === 'User not found') {
@@ -664,6 +686,68 @@
       document.getElementById('chatLoadingBubble')?.remove();
       renderChatBubble('bot', '❌ ' + e.message);
     }
+  }
+  async function loadAnalytics() {
+    try {
+      const data = await authedFetch('/api/v1/analytics/overview');
+      renderAnalytics(data.data);
+    } catch(e) {
+      document.getElementById('analyticsContent').innerHTML = `<div class="empty-note">❌ ${e.message}</div>`;
+    }
+  }
+
+  function renderAnalytics(d) {
+    const last14 = d.daily.slice(-14);
+    const maxCal = Math.max(d.goal, ...last14.map(x => x.calories), 1);
+    const barsHtml = last14.map(x => {
+      const pct = Math.round((x.calories / maxCal) * 100);
+      const onTarget = x.calories >= d.goal * 0.9 && x.calories <= d.goal * 1.1;
+      const color = onTarget ? 'var(--p)' : x.calories > d.goal * 1.1 ? 'var(--a)' : 'var(--s)';
+      const day = new Date(x.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' });
+      return `<div class="bar-chart-col">
+        <div class="bar-chart-bar" style="height:${pct}%; background:${color};" title="${x.calories} kcal"></div>
+        <div class="bar-chart-lbl">${day}</div>
+      </div>`;
+    }).join('');
+
+    const totalMacros = d.avgProtein + d.avgCarbs + d.avgFat || 1;
+    const macroBar = (label, val, color) => `
+      <div class="macro-bar-row">
+        <div class="macro-bar-head"><span>${label}</span><span style="color:${color};font-weight:700;">${val}g</span></div>
+        <div class="macro-bar-track"><div class="macro-bar-fill" style="width:${Math.round((val/totalMacros)*100)}%; background:${color};"></div></div>
+      </div>`;
+
+    const mealTypeIcons = { breakfast: '🌅', lunch: '🍽️', dinner: '🌙', snack: '🍿' };
+    const mealTypeHtml = d.mealTypeBreakdown.length
+      ? d.mealTypeBreakdown.map(m => `<div class="stat"><b style="display:block;font-size:18px;color:var(--p);">${m.count}</b>${mealTypeIcons[m.type]||'🍴'} ${m.type}</div>`).join('')
+      : `<div class="empty-note">No meals logged in the last 30 days</div>`;
+
+    document.getElementById('analyticsContent').innerHTML = `
+      <div class="analytics-stat-grid">
+        <div class="glass analytics-stat"><div class="val" style="color:var(--a);">${d.avgCalories}</div><div class="lbl">Avg Calories/Day</div></div>
+        <div class="glass analytics-stat"><div class="val" style="color:var(--p);">${d.goalAdherencePct}%</div><div class="lbl">Goal Adherence</div></div>
+        <div class="glass analytics-stat"><div class="val" style="color:var(--s);">${d.activeDays}</div><div class="lbl">Active Days (30d)</div></div>
+        <div class="glass analytics-stat"><div class="val" style="color:var(--g);">${d.totalMeals}</div><div class="lbl">Total Meals (30d)</div></div>
+      </div>
+
+      <div class="glass">
+        <div class="section-title" style="margin-bottom:4px;">📈 Last 14 Days — Calories</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:8px;">Goal: ${d.goal.toLocaleString()} kcal/day · 🟢 on target · 🔵 under · 🔴 over</div>
+        <div class="bar-chart">${barsHtml || '<div class="empty-note">No data yet</div>'}</div>
+      </div>
+
+      <div class="glass">
+        <div class="section-title" style="margin-bottom:12px;">🥗 Average Daily Macros</div>
+        ${macroBar('Protein', d.avgProtein, 'var(--s)')}
+        ${macroBar('Carbs', d.avgCarbs, 'var(--g)')}
+        ${macroBar('Fat', d.avgFat, 'var(--p)')}
+      </div>
+
+      <div class="glass">
+        <div class="section-title" style="margin-bottom:10px;">🍽️ Meal Type Breakdown</div>
+        <div class="stat-grid" style="grid-template-columns:repeat(${Math.max(d.mealTypeBreakdown.length,1)},1fr);">${mealTypeHtml}</div>
+      </div>
+    `;
   }
 </script>
 </body>
