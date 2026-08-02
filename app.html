@@ -22,6 +22,18 @@
   .center-pad { padding: 60px 20px; text-align:center; color:var(--sub); }
   input { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:12px; border-radius:10px; font-size:14px; margin-bottom:10px; }
   .meal-type-select { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:12px; border-radius:10px; font-size:14px; margin-bottom:10px; appearance:none; }
+
+  /* Custom dropdown */
+  .custom-select { position:relative; margin-bottom:10px; }
+  .cs-trigger { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:12px 14px; border-radius:10px; font-size:14px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; }
+  .cs-trigger:hover { border-color:rgba(255,255,255,0.25); }
+  .cs-trigger .chev { color:var(--sub); font-size:11px; transition:transform .2s; margin-left:8px; }
+  .custom-select.open .cs-trigger .chev { transform:rotate(180deg); }
+  .cs-panel { position:absolute; top:calc(100% + 6px); left:0; right:0; background:#161628; border:1px solid var(--border); border-radius:10px; box-shadow:0 12px 28px rgba(0,0,0,.5); z-index:200; max-height:220px; overflow-y:auto; display:none; }
+  .custom-select.open .cs-panel { display:block; }
+  .cs-option { padding:11px 14px; font-size:14px; cursor:pointer; color:#eee; }
+  .cs-option:hover { background:rgba(255,255,255,0.06); }
+  .cs-option.selected { background:linear-gradient(135deg,var(--p),var(--s)); color:#fff; font-weight:700; }
   button.primary { background:linear-gradient(135deg,var(--p),#00C896bb); color:#fff; border:none; border-radius:10px; padding:12px 16px; font-weight:700; font-size:14px; cursor:pointer; width:100%; }
   .err { background:rgba(255,107,107,0.1); border:1px solid rgba(255,107,107,0.3); color:var(--a); padding:8px 12px; border-radius:8px; font-size:12px; margin-top:10px; display:none; }
 
@@ -244,12 +256,7 @@
         </div>
         <div style="margin-top:10px;">
           <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Meal type</label>
-          <select id="scanMealType" class="meal-type-select">
-            <option value="breakfast">🌅 Breakfast</option>
-            <option value="lunch">🍽️ Lunch</option>
-            <option value="dinner">🌙 Dinner</option>
-            <option value="snack">🍿 Snack</option>
-          </select>
+          <div id="scanMealType_cs"></div>
         </div>
         <div class="scan-btns">
           <button class="btn btn-p" style="flex:2;" onclick="confirmScanLog()">✅ Add to Log</button>
@@ -261,12 +268,7 @@
         <div class="section-title" style="margin-bottom:8px;">✏️ Or Log Manually</div>
         <input type="text" id="manualName" placeholder="Meal name">
         <input type="number" id="manualCal" placeholder="Calories">
-        <select id="manualMealType" class="meal-type-select">
-          <option value="breakfast">🌅 Breakfast</option>
-          <option value="lunch">🍽️ Lunch</option>
-          <option value="dinner">🌙 Dinner</option>
-          <option value="snack">🍿 Snack</option>
-        </select>
+        <div id="manualMealType_cs"></div>
         <button class="primary" onclick="manualLog()">Log Meal</button>
       </div>
     </div>
@@ -371,11 +373,7 @@
         <input type="number" id="profAge" placeholder="e.g. 25">
 
         <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Gender</label>
-        <select id="profGender" class="meal-type-select">
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="other">Other</option>
-        </select>
+        <div id="profGender_cs"></div>
 
         <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Weight (kg)</label>
         <input type="number" id="profWeight" placeholder="e.g. 65" step="0.1">
@@ -384,18 +382,10 @@
         <input type="number" id="profHeight" placeholder="e.g. 170" step="0.1">
 
         <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Goal</label>
-        <select id="profGoal" class="meal-type-select">
-          <option value="lose">Lose Weight</option>
-          <option value="maintain">Maintain Weight</option>
-          <option value="gain">Gain Weight</option>
-        </select>
+        <div id="profGoal_cs"></div>
 
         <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Activity Level</label>
-        <select id="profActivity" class="meal-type-select">
-          <option value="low">Low (little exercise)</option>
-          <option value="mod">Moderate (exercise 2-3x/week)</option>
-          <option value="high">High (exercise 5+x/week)</option>
-        </select>
+        <div id="profActivity_cs"></div>
 
         <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Daily Calorie Goal</label>
         <input type="number" id="profCalGoal" placeholder="e.g. 1800">
@@ -418,6 +408,62 @@
     measurementId: "G-7XG2KFWM4N"
   };
   firebase.initializeApp(firebaseConfig);
+
+  // ── Custom Dropdown Component ──────────────────────────
+  const SELECT_OPTIONS = {
+    profGender:      [['male','Male'],['female','Female'],['other','Other']],
+    profGoal:        [['lose','Lose Weight'],['maintain','Maintain Weight'],['gain','Gain Weight']],
+    profActivity:    [['low','Low (little exercise)'],['mod','Moderate (exercise 2-3x/week)'],['high','High (exercise 5+x/week)']],
+    scanMealType:    [['breakfast','🌅 Breakfast'],['lunch','🍽️ Lunch'],['dinner','🌙 Dinner'],['snack','🍿 Snack']],
+    manualMealType:  [['breakfast','🌅 Breakfast'],['lunch','🍽️ Lunch'],['dinner','🌙 Dinner'],['snack','🍿 Snack']],
+  };
+
+  function initCustomSelects() {
+    Object.keys(SELECT_OPTIONS).forEach(id => {
+      const mount = document.getElementById(id + '_cs');
+      if (!mount) return;
+      const opts = SELECT_OPTIONS[id];
+      mount.innerHTML = `
+        <div class="custom-select" id="${id}_wrap">
+          <input type="hidden" id="${id}" value="${opts[0][0]}">
+          <div class="cs-trigger" onclick="toggleCustomSelect('${id}')"><span id="${id}_label">${opts[0][1]}</span><span class="chev">▾</span></div>
+          <div class="cs-panel">
+            ${opts.map(([v,l]) => `<div class="cs-option${v===opts[0][0]?' selected':''}" data-val="${v}" onclick="selectCustomOption('${id}','${v}')">${l}</div>`).join('')}
+          </div>
+        </div>`;
+    });
+  }
+
+  function toggleCustomSelect(id) {
+    document.querySelectorAll('.custom-select').forEach(el => { if (el.id !== id + '_wrap') el.classList.remove('open'); });
+    document.getElementById(id + '_wrap').classList.toggle('open');
+  }
+
+  function selectCustomOption(id, value) {
+    const opt = SELECT_OPTIONS[id].find(o => o[0] === value);
+    document.getElementById(id).value = value;
+    document.getElementById(id + '_label').textContent = opt ? opt[1] : value;
+    document.getElementById(id + '_wrap').querySelectorAll('.cs-option').forEach(el => el.classList.toggle('selected', el.dataset.val === value));
+    document.getElementById(id + '_wrap').classList.remove('open');
+  }
+
+  function setSelectValue(id, value) {
+    if (!SELECT_OPTIONS[id]) return;
+    const opt = SELECT_OPTIONS[id].find(o => o[0] === value) || SELECT_OPTIONS[id][0];
+    document.getElementById(id).value = opt[0];
+    const label = document.getElementById(id + '_label');
+    if (label) label.textContent = opt[1];
+    const wrap = document.getElementById(id + '_wrap');
+    if (wrap) wrap.querySelectorAll('.cs-option').forEach(el => el.classList.toggle('selected', el.dataset.val === opt[0]));
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-select')) {
+      document.querySelectorAll('.custom-select.open').forEach(el => el.classList.remove('open'));
+    }
+  });
+
+  initCustomSelects();
   const auth = firebase.auth();
   const API_BASE = "https://nutrisnap-ai-backend-production.up.railway.app";
   let latestData = null;
@@ -441,7 +487,7 @@
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       document.getElementById('userEmailLabel').textContent = user.email;
-      document.getElementById('manualMealType').value = getDefaultMealType();
+      setSelectValue('manualMealType', getDefaultMealType());
       await loadStats();
       show('appView');
     } else {
@@ -523,7 +569,7 @@
     document.getElementById('scanPro').textContent = Math.round(r.protein);
     document.getElementById('scanCarb').textContent = Math.round(r.carbs);
     document.getElementById('scanFat').textContent = Math.round(r.fat);
-    document.getElementById('scanMealType').value = r.meal_type || getDefaultMealType();
+    setSelectValue('scanMealType', r.meal_type || getDefaultMealType());
   }
 
   function resetScanner() {
@@ -579,11 +625,11 @@
       const data = await authedFetch('/api/v1/auth/me');
       const u = data.data;
       document.getElementById('profAge').value = u.age || '';
-      document.getElementById('profGender').value = u.gender || 'other';
+      setSelectValue('profGender', u.gender || 'other');
       document.getElementById('profWeight').value = u.weight_kg || '';
       document.getElementById('profHeight').value = u.height_cm || '';
-      document.getElementById('profGoal').value = u.goal || 'maintain';
-      document.getElementById('profActivity').value = u.activity_level || 'mod';
+      setSelectValue('profGoal', u.goal || 'maintain');
+      setSelectValue('profActivity', u.activity_level || 'mod');
       document.getElementById('profCalGoal').value = u.daily_cal_goal || 1800;
 
       const bmi = u.weight_kg && u.height_cm ? parseFloat((u.weight_kg / ((u.height_cm/100)**2)).toFixed(1)) : null;
