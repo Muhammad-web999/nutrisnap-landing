@@ -21,6 +21,7 @@
   .hidden { display:none !important; }
   .center-pad { padding: 60px 20px; text-align:center; color:var(--sub); }
   input { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:12px; border-radius:10px; font-size:14px; margin-bottom:10px; }
+  .meal-type-select { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#fff; padding:12px; border-radius:10px; font-size:14px; margin-bottom:10px; appearance:none; }
   button.primary { background:linear-gradient(135deg,var(--p),#00C896bb); color:#fff; border:none; border-radius:10px; padding:12px 16px; font-weight:700; font-size:14px; cursor:pointer; width:100%; }
   .err { background:rgba(255,107,107,0.1); border:1px solid rgba(255,107,107,0.3); color:var(--a); padding:8px 12px; border-radius:8px; font-size:12px; margin-top:10px; display:none; }
 
@@ -121,10 +122,6 @@
   .analytics-stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
   .analytics-stat { text-align:center; padding:14px; }
   .analytics-stat .val { font-size:24px; font-weight:900; } .analytics-stat .lbl { font-size:11px; color:var(--sub); margin-top:2px; }
-  .bar-chart { display:flex; align-items:flex-end; gap:4px; height:140px; margin-top:10px; }
-  .bar-chart-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
-  .bar-chart-bar { width:100%; border-radius:4px 4px 0 0; min-height:2px; transition:height .5s ease; }
-  .bar-chart-lbl { font-size:8px; color:var(--sub); margin-top:4px; white-space:nowrap; }
   .macro-bar-row { margin-bottom:12px; }
   .macro-bar-head { display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; }
   .macro-bar-track { height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; }
@@ -211,6 +208,7 @@
       <button class="tab" data-tab="social" onclick="switchTab('social')">🤝<br>Social</button>
       <button class="tab" data-tab="chat" onclick="switchTab('chat')">💬<br>Chat</button>
       <button class="tab" data-tab="analytics" onclick="switchTab('analytics')">📊<br>Stats</button>
+      <button class="tab" data-tab="profile" onclick="switchTab('profile')">👤<br>Profile</button>
     </div>
   </div>
 
@@ -244,6 +242,15 @@
           <div class="nut-box" style="background:rgba(255,215,0,0.1);"><span>🌾</span><div><div class="nut-val" style="color:var(--g);" id="scanCarb">0</div><div class="nut-lbl">Carbs (g)</div></div></div>
           <div class="nut-box" style="background:rgba(0,200,150,0.1);"><span>🥑</span><div><div class="nut-val" style="color:var(--p);" id="scanFat">0</div><div class="nut-lbl">Fat (g)</div></div></div>
         </div>
+        <div style="margin-top:10px;">
+          <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Meal type</label>
+          <select id="scanMealType" class="meal-type-select">
+            <option value="breakfast">🌅 Breakfast</option>
+            <option value="lunch">🍽️ Lunch</option>
+            <option value="dinner">🌙 Dinner</option>
+            <option value="snack">🍿 Snack</option>
+          </select>
+        </div>
         <div class="scan-btns">
           <button class="btn btn-p" style="flex:2;" onclick="confirmScanLog()">✅ Add to Log</button>
           <button class="btn btn-a" style="flex:1;" onclick="resetScanner()">🔄 Rescan</button>
@@ -254,6 +261,12 @@
         <div class="section-title" style="margin-bottom:8px;">✏️ Or Log Manually</div>
         <input type="text" id="manualName" placeholder="Meal name">
         <input type="number" id="manualCal" placeholder="Calories">
+        <select id="manualMealType" class="meal-type-select">
+          <option value="breakfast">🌅 Breakfast</option>
+          <option value="lunch">🍽️ Lunch</option>
+          <option value="dinner">🌙 Dinner</option>
+          <option value="snack">🍿 Snack</option>
+        </select>
         <button class="primary" onclick="manualLog()">Log Meal</button>
       </div>
     </div>
@@ -345,6 +358,52 @@
         <div class="empty-note">Loading your analytics...</div>
       </div>
     </div>
+
+    <!-- PROFILE -->
+    <div class="tab-panel hidden" id="panel-profile">
+      <div class="glass" id="profileBmiCard" style="text-align:center;">
+        <div class="empty-note">Loading...</div>
+      </div>
+
+      <div class="glass">
+        <div class="section-title" style="margin-bottom:12px;">👤 Your Details</div>
+        <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Age</label>
+        <input type="number" id="profAge" placeholder="e.g. 25">
+
+        <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Gender</label>
+        <select id="profGender" class="meal-type-select">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+
+        <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Weight (kg)</label>
+        <input type="number" id="profWeight" placeholder="e.g. 65" step="0.1">
+
+        <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Height (cm)</label>
+        <input type="number" id="profHeight" placeholder="e.g. 170" step="0.1">
+
+        <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Goal</label>
+        <select id="profGoal" class="meal-type-select">
+          <option value="lose">Lose Weight</option>
+          <option value="maintain">Maintain Weight</option>
+          <option value="gain">Gain Weight</option>
+        </select>
+
+        <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Activity Level</label>
+        <select id="profActivity" class="meal-type-select">
+          <option value="low">Low (little exercise)</option>
+          <option value="mod">Moderate (exercise 2-3x/week)</option>
+          <option value="high">High (exercise 5+x/week)</option>
+        </select>
+
+        <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Daily Calorie Goal</label>
+        <input type="number" id="profCalGoal" placeholder="e.g. 1800">
+
+        <button class="primary" onclick="saveProfile()">Save Profile</button>
+        <div class="err" id="profileErr" style="display:none;"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -382,6 +441,7 @@
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       document.getElementById('userEmailLabel').textContent = user.email;
+      document.getElementById('manualMealType').value = getDefaultMealType();
       await loadStats();
       show('appView');
     } else {
@@ -406,6 +466,7 @@
       await loadChallenges();
       await loadSocial();
       await loadAnalytics();
+      await loadProfile();
       hide('loadingView');
     } catch(e) {
       if (e.message === 'User not found') {
@@ -462,6 +523,7 @@
     document.getElementById('scanPro').textContent = Math.round(r.protein);
     document.getElementById('scanCarb').textContent = Math.round(r.carbs);
     document.getElementById('scanFat').textContent = Math.round(r.fat);
+    document.getElementById('scanMealType').value = r.meal_type || getDefaultMealType();
   }
 
   function resetScanner() {
@@ -471,23 +533,105 @@
 
   async function confirmScanLog() {
     if (!currentScan) return;
-    await logMeal(currentScan.name, currentScan.calories, currentScan.protein, currentScan.carbs, currentScan.fat, 'ai');
+    const mealType = document.getElementById('scanMealType').value;
+    await logMeal(currentScan.name, currentScan.calories, currentScan.protein, currentScan.carbs, currentScan.fat, 'ai', mealType);
     resetScanner();
   }
 
   async function manualLog() {
     const name = document.getElementById('manualName').value.trim();
     const cal = document.getElementById('manualCal').value;
+    const mealType = document.getElementById('manualMealType').value;
     if (!name || !cal) { toast('Enter a meal name and calories', true); return; }
-    await logMeal(name, cal, 0, 0, 0, 'manual');
+    await logMeal(name, cal, 0, 0, 0, 'manual', mealType);
     document.getElementById('manualName').value = ''; document.getElementById('manualCal').value = '';
   }
 
-  async function logMeal(name, calories, protein, carbs, fat, source) {
+  function buildBmiCardHtml(bmi, bmiStatus, weightKg, heightCm) {
+    if (!bmi) return `<div class="empty-note">Enter your weight & height below to see your BMI</div>`;
+    const bmiToPct = (b) => {
+      const pts = [[15,0],[18.5,20],[25,50],[30,75],[40,100]];
+      if (b <= pts[0][0]) return 0;
+      if (b >= pts[pts.length-1][0]) return 100;
+      for (let i=0;i<pts.length-1;i++) {
+        if (b >= pts[i][0] && b <= pts[i+1][0]) {
+          const [x1,y1] = pts[i], [x2,y2] = pts[i+1];
+          return y1 + (b-x1)*(y2-y1)/(x2-x1);
+        }
+      }
+      return 50;
+    };
+    const pct = bmiToPct(bmi);
+    const statusColor = { Underweight:'#6C63FF', Healthy:'#00C896', Overweight:'#FFD700', Obese:'#FF6B6B' }[bmiStatus] || 'var(--sub)';
+    return `
+      <div style="text-align:center; font-size:28px; font-weight:900;">${bmi}</div>
+      <div style="text-align:center; font-size:11px; color:var(--sub); margin-bottom:6px;">BMI · ${weightKg}kg / ${heightCm}cm</div>
+      <div class="bmi-slider-track">
+        <div class="bmi-slider-marker" style="left:${pct}%;">${bmi}</div>
+      </div>
+      <div class="bmi-slider-labels"><span>Under</span><span>Healthy</span><span>Over</span><span>Obese</span></div>
+      <div style="text-align:center;"><span class="bmi-status-pill" style="background:${statusColor}22; color:${statusColor};">${bmiStatus}</span></div>
+    `;
+  }
+
+  async function loadProfile() {
+    try {
+      const data = await authedFetch('/api/v1/auth/me');
+      const u = data.data;
+      document.getElementById('profAge').value = u.age || '';
+      document.getElementById('profGender').value = u.gender || 'other';
+      document.getElementById('profWeight').value = u.weight_kg || '';
+      document.getElementById('profHeight').value = u.height_cm || '';
+      document.getElementById('profGoal').value = u.goal || 'maintain';
+      document.getElementById('profActivity').value = u.activity_level || 'mod';
+      document.getElementById('profCalGoal').value = u.daily_cal_goal || 1800;
+
+      const bmi = u.weight_kg && u.height_cm ? parseFloat((u.weight_kg / ((u.height_cm/100)**2)).toFixed(1)) : null;
+      const bmiStatus = bmi ? (bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Healthy' : bmi < 30 ? 'Overweight' : 'Obese') : null;
+      document.getElementById('profileBmiCard').innerHTML = buildBmiCardHtml(bmi, bmiStatus, u.weight_kg, u.height_cm);
+    } catch(e) {
+      document.getElementById('profileBmiCard').innerHTML = `<div class="empty-note">❌ ${e.message}</div>`;
+    }
+  }
+
+  async function saveProfile() {
+    const errEl = document.getElementById('profileErr');
+    errEl.style.display = 'none';
+    try {
+      await authedFetch('/api/v1/users/me', {
+        method: 'PUT',
+        body: JSON.stringify({
+          age: parseInt(document.getElementById('profAge').value) || null,
+          gender: document.getElementById('profGender').value,
+          weight_kg: parseFloat(document.getElementById('profWeight').value) || null,
+          height_cm: parseFloat(document.getElementById('profHeight').value) || null,
+          goal: document.getElementById('profGoal').value,
+          activity_level: document.getElementById('profActivity').value,
+          daily_cal_goal: parseInt(document.getElementById('profCalGoal').value) || 1800,
+        })
+      });
+      toast('✅ Profile saved!');
+      await loadProfile();
+      await loadAnalytics();
+    } catch(e) {
+      errEl.textContent = '❌ ' + e.message;
+      errEl.style.display = 'block';
+    }
+  }
+
+  function getDefaultMealType() {
+    const h = new Date().getHours();
+    if (h < 11) return 'breakfast';
+    if (h < 16) return 'lunch';
+    if (h < 21) return 'dinner';
+    return 'snack';
+  }
+
+  async function logMeal(name, calories, protein, carbs, fat, source, mealType) {
     try {
       const data = await authedFetch('/api/v1/meals', {
         method:'POST',
-        body: JSON.stringify({ name, calories, protein_g:protein, carbs_g:carbs, fat_g:fat, meal_type:'snack', source })
+        body: JSON.stringify({ name, calories, protein_g:protein, carbs_g:carbs, fat_g:fat, meal_type: mealType || getDefaultMealType(), source })
       });
       const g = data.gamification;
       if (g) {
@@ -718,17 +862,53 @@
 
   function renderAnalytics(d) {
     const last14 = d.daily.slice(-14);
-    const maxCal = Math.max(d.goal, ...last14.map(x => x.calories), 1);
-    const barsHtml = last14.map(x => {
-      const pct = Math.round((x.calories / maxCal) * 100);
-      const onTarget = x.calories >= d.goal * 0.9 && x.calories <= d.goal * 1.1;
-      const color = onTarget ? 'var(--p)' : x.calories > d.goal * 1.1 ? 'var(--a)' : 'var(--s)';
-      const day = new Date(x.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' });
-      return `<div class="bar-chart-col">
-        <div class="bar-chart-bar" style="height:${pct}%; background:${color};" title="${x.calories} kcal"></div>
-        <div class="bar-chart-lbl">${day}</div>
-      </div>`;
+
+    // ── Smooth line/area chart for the 14-day trend ──
+    const chartW = 320, chartH = 130, padX = 8, padY = 14;
+    const maxCal = Math.max(d.goal * 1.15, ...last14.map(x => x.calories), 1);
+    const n = last14.length;
+    const pointX = (i) => n <= 1 ? chartW/2 : padX + (i * (chartW - padX*2) / (n-1));
+    const pointY = (cal) => chartH - padY - ((cal / maxCal) * (chartH - padY*2));
+    const points = last14.map((x,i) => ({ x: pointX(i), y: pointY(x.calories), cal: x.calories, date: x.date }));
+    const goalY = pointY(d.goal);
+
+    let pathLine = '', pathArea = '';
+    if (points.length === 1) {
+      pathLine = `M ${points[0].x-4},${points[0].y} L ${points[0].x+4},${points[0].y}`;
+    } else if (points.length > 1) {
+      pathLine = `M ${points[0].x},${points[0].y}`;
+      for (let i=0;i<points.length-1;i++) {
+        const p0=points[i], p1=points[i+1];
+        const midX = (p0.x+p1.x)/2;
+        pathLine += ` C ${midX},${p0.y} ${midX},${p1.y} ${p1.x},${p1.y}`;
+      }
+      pathArea = pathLine + ` L ${points[points.length-1].x},${chartH-padY} L ${points[0].x},${chartH-padY} Z`;
+    }
+    const dotsHtml = points.map(p => {
+      const onTarget = p.cal >= d.goal*0.9 && p.cal <= d.goal*1.1;
+      const color = onTarget ? '#00C896' : p.cal > d.goal*1.1 ? '#FF6B6B' : '#6C63FF';
+      return `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${color}" stroke="#0D0D1A" stroke-width="1.5"><title>${p.date}: ${p.cal} kcal</title></circle>`;
     }).join('');
+    const dayLabels = last14.length
+      ? `<div style="display:flex; justify-content:space-between; font-size:9px; color:var(--sub); margin-top:4px;">
+          <span>${new Date(last14[0].date+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
+          <span>${new Date(last14[last14.length-1].date+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>
+        </div>` : '';
+    const trendChartHtml = last14.length ? `
+      <svg width="100%" viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="none" style="overflow:visible;">
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#00C896" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#00C896" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <line x1="0" y1="${goalY}" x2="${chartW}" y2="${goalY}" stroke="#fff" stroke-opacity="0.3" stroke-width="1" stroke-dasharray="4 3"/>
+        <path d="${pathArea}" fill="url(#areaGrad)"/>
+        <path d="${pathLine}" fill="none" stroke="#00C896" stroke-width="2.5" stroke-linecap="round"/>
+        ${dotsHtml}
+      </svg>
+      ${dayLabels}
+    ` : `<div class="empty-note">No data yet — log some meals to see your trend</div>`;
 
     const mealTypeIcons = { breakfast: '🌅', lunch: '🍽️', dinner: '🌙', snack: '🍿' };
     const mealTypeHtml = d.mealTypeBreakdown.length
@@ -767,33 +947,6 @@
       ? d.today.byMealType.map(m => `<div class="stacked-legend-item"><span class="ring-dot" style="background:${mtColors[m.type]||'var(--sub)'};"></span>${mealTypeIcons[m.type]||''} ${m.type}: ${m.calories} kcal</div>`).join('')
       : `<div class="empty-note">No meals logged today yet</div>`;
 
-    // ── 3. BMI bi-directional slider ──
-    let bmiHtml = `<div class="empty-note">Add your weight & height in your profile to see this</div>`;
-    if (d.bmi) {
-      const bmiToPct = (b) => {
-        const pts = [[15,0],[18.5,20],[25,50],[30,75],[40,100]];
-        if (b <= pts[0][0]) return 0;
-        if (b >= pts[pts.length-1][0]) return 100;
-        for (let i=0;i<pts.length-1;i++) {
-          if (b >= pts[i][0] && b <= pts[i+1][0]) {
-            const [x1,y1] = pts[i], [x2,y2] = pts[i+1];
-            return y1 + (b-x1)*(y2-y1)/(x2-x1);
-          }
-        }
-        return 50;
-      };
-      const pct = bmiToPct(d.bmi);
-      const statusColor = { Underweight:'#6C63FF', Healthy:'#00C896', Overweight:'#FFD700', Obese:'#FF6B6B' }[d.bmiStatus] || 'var(--sub)';
-      bmiHtml = `
-        <div style="text-align:center; font-size:28px; font-weight:900;">${d.bmi}</div>
-        <div style="text-align:center; font-size:11px; color:var(--sub); margin-bottom:6px;">BMI · ${d.weightKg}kg / ${d.heightCm}cm</div>
-        <div class="bmi-slider-track">
-          <div class="bmi-slider-marker" style="left:${pct}%;">${d.bmi}</div>
-        </div>
-        <div class="bmi-slider-labels"><span>Under</span><span>Healthy</span><span>Over</span><span>Obese</span></div>
-        <div style="text-align:center;"><span class="bmi-status-pill" style="background:${statusColor}22; color:${statusColor};">${d.bmiStatus}</span></div>
-      `;
-    }
 
     document.getElementById('analyticsContent').innerHTML = `
       <div class="analytics-stat-grid">
@@ -818,14 +971,9 @@
       </div>
 
       <div class="glass">
-        <div class="section-title" style="margin-bottom:4px;">⚖️ Health Status</div>
-        ${bmiHtml}
-      </div>
-
-      <div class="glass">
-        <div class="section-title" style="margin-bottom:4px;">📈 Last 14 Days — Calories</div>
-        <div style="font-size:11px;color:var(--sub);margin-bottom:8px;">Goal: ${d.goal.toLocaleString()} kcal/day · 🟢 on target · 🔵 under · 🔴 over</div>
-        <div class="bar-chart">${barsHtml || '<div class="empty-note">No data yet</div>'}</div>
+        <div class="section-title" style="margin-bottom:4px;">📈 14-Day Trend</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:8px;">Dashed line = your goal · 🟢 on target · 🔵 under · 🔴 over</div>
+        ${trendChartHtml}
       </div>
 
       <div class="glass">
