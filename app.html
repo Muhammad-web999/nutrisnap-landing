@@ -393,6 +393,14 @@
         <button class="primary" onclick="saveProfile()">Save Profile</button>
         <div class="err" id="profileErr" style="display:none;"></div>
       </div>
+
+      <div class="glass">
+        <div class="section-title" style="margin-bottom:4px;">🔔 Test Notifications</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:12px;">Send yourself a test email right now — no waiting for the daily scheduler.</div>
+        <button class="btn btn-p" style="width:100%;margin-bottom:8px;" onclick="testNotification('test-reminder','Reminder')">📸 Send Reminder Email</button>
+        <button class="btn btn-p" style="width:100%;margin-bottom:8px;" onclick="testNotification('test-streak','Streak')">🔥 Send Streak Email</button>
+        <button class="btn btn-p" style="width:100%;" onclick="testNotification('test-weekly-report','Weekly Report')">📊 Send Weekly Report</button>
+      </div>
     </div>
   </div>
 </div>
@@ -637,6 +645,15 @@
       document.getElementById('profileBmiCard').innerHTML = buildBmiCardHtml(bmi, bmiStatus, u.weight_kg, u.height_cm);
     } catch(e) {
       document.getElementById('profileBmiCard').innerHTML = `<div class="empty-note">❌ ${e.message}</div>`;
+    }
+  }
+
+  async function testNotification(endpoint, label) {
+    try {
+      const data = await authedFetch('/api/v1/notifications/' + endpoint, { method: 'POST' });
+      toast(data.success ? `✅ ${label} email sent — check your inbox!` : `❌ ${data.message}`, !data.success);
+    } catch(e) {
+      toast('❌ ' + e.message, true);
     }
   }
 
