@@ -368,6 +368,12 @@
       </div>
 
       <div class="glass">
+        <div class="section-title" style="margin-bottom:4px;">🏃 Google Health</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:12px;">Sync your steps and weight automatically.</div>
+        <div id="healthSyncContent"><div class="empty-note">Loading...</div></div>
+      </div>
+
+      <div class="glass">
         <div class="section-title" style="margin-bottom:12px;">👤 Your Details</div>
         <label style="font-size:11px;color:var(--sub);display:block;margin-bottom:4px;">Age</label>
         <input type="number" id="profAge" placeholder="e.g. 25">
@@ -521,6 +527,8 @@
       await loadSocial();
       await loadAnalytics();
       await loadProfile();
+      await loadHealthSync();
+      checkHealthSyncRedirect();
       hide('loadingView');
     } catch(e) {
       if (e.message === 'User not found') {
@@ -626,6 +634,68 @@
       <div class="bmi-slider-labels"><span>Under</span><span>Healthy</span><span>Over</span><span>Obese</span></div>
       <div style="text-align:center;"><span class="bmi-status-pill" style="background:${statusColor}22; color:${statusColor};">${bmiStatus}</span></div>
     `;
+  }
+
+  // ── Google Health ────────────────────────────────────────
+  function checkHealthSyncRedirect() {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get('health_sync');
+    if (!result) return;
+    if (result === 'connected') { toast('✅ Google Health connected!'); syncGoogleHealth(); }
+    else if (result === 'denied') toast('Connection cancelled', true);
+    else toast('❌ Something went wrong connecting Google Health', true);
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  async function loadHealthSync() {
+    try {
+      const data = await authedFetch('/api/v1/health-sync/status');
+      renderHealthSync(data.data);
+    } catch(e) {
+      document.getElementById('healthSyncContent').innerHTML = `<div class="empty-note">❌ ${e.message}</div>`;
+    }
+  }
+
+  function renderHealthSync(d) {
+    const el = document.getElementById('healthSyncContent');
+    if (!d.connected) {
+      el.innerHTML = `<button class="btn btn-p" style="width:100%;" onclick="connectGoogleHealth()">🔗 Connect Google Health</button>`;
+      return;
+    }
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="color:var(--p);font-size:13px;font-weight:700;">✅ Connected</div>
+        <div style="font-size:11px;color:var(--sub);">${d.lastSyncedAt ? 'Synced ' + new Date(d.lastSyncedAt).toLocaleString() : 'Not synced yet'}</div>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-bottom:10px;">
+        <div class="stat" style="background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;"><b style="display:block;font-size:18px;color:var(--s);">${d.lastSteps ?? '—'}</b>👣 Steps today</div>
+        <div class="stat" style="background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;"><b style="display:block;font-size:18px;color:var(--p);">${d.lastWeightKg ?? '—'}</b>⚖️ Weight (kg)</div>
+      </div>
+      <button class="btn btn-p" style="width:100%;margin-bottom:8px;" onclick="syncGoogleHealth()">🔄 Sync Now</button>
+      <button class="btn btn-a" style="width:100%;" onclick="disconnectGoogleHealth()">🔌 Disconnect</button>
+    `;
+  }
+
+  async function connectGoogleHealth() {
+    const idToken = await auth.currentUser.getIdToken();
+    window.location.href = API_BASE + '/api/v1/health-sync/connect?token=' + encodeURIComponent(idToken);
+  }
+
+  async function syncGoogleHealth() {
+    try {
+      const data = await authedFetch('/api/v1/health-sync/refresh', { method:'POST' });
+      toast(`✅ Synced! ${data.data.steps ?? 0} steps, ${data.data.weightKg ?? '—'}kg`);
+      await loadHealthSync();
+      await loadProfile();
+    } catch(e) { toast('❌ ' + e.message, true); }
+  }
+
+  async function disconnectGoogleHealth() {
+    try {
+      await authedFetch('/api/v1/health-sync/disconnect', { method:'DELETE' });
+      toast('Disconnected from Google Health');
+      await loadHealthSync();
+    } catch(e) { toast('❌ ' + e.message, true); }
   }
 
   async function loadProfile() {
