@@ -159,6 +159,15 @@
   .bmi-slider-labels { display:flex; justify-content:space-between; font-size:9px; color:var(--sub); }
   .bmi-status-pill { display:inline-block; margin-top:12px; padding:5px 14px; border-radius:20px; font-size:12px; font-weight:700; }
 
+  /* Billing */
+  .plan-toggle { display:flex; background:rgba(255,255,255,0.05); border-radius:10px; padding:3px; margin-bottom:14px; }
+  .plan-toggle-opt { flex:1; padding:9px; border:none; background:transparent; color:var(--sub); border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; text-align:center; }
+  .plan-toggle-opt.active { background:linear-gradient(135deg,var(--p),var(--s)); color:#fff; }
+  .plan-price { text-align:center; padding:16px 0; }
+  .plan-price .amount { font-size:36px; font-weight:900; } .plan-price .amount span { font-size:15px; color:var(--sub); font-weight:500; }
+  .plan-price .save { color:var(--g); font-size:12px; font-weight:700; margin-top:4px; }
+  .pro-badge { display:inline-block; background:linear-gradient(135deg,var(--g),var(--o)); color:#0D0D1A; padding:3px 12px; border-radius:20px; font-size:11px; font-weight:800; }
+
   /* SCANNER */
   .scan-zone { text-align:center; padding:28px; }
   .scan-icon { font-size:56px; margin-bottom:12px; }
@@ -363,6 +372,10 @@
 
     <!-- PROFILE -->
     <div class="tab-panel hidden" id="panel-profile">
+      <div class="glass" id="billingCard">
+        <div class="empty-note">Loading...</div>
+      </div>
+
       <div class="glass" id="profileBmiCard" style="text-align:center;">
         <div class="empty-note">Loading...</div>
       </div>
@@ -529,6 +542,8 @@
       await loadProfile();
       await loadHealthSync();
       checkHealthSyncRedirect();
+      checkBillingRedirect();
+      await loadBilling();
       hide('loadingView');
     } catch(e) {
       if (e.message === 'User not found') {
@@ -634,6 +649,79 @@
       <div class="bmi-slider-labels"><span>Under</span><span>Healthy</span><span>Over</span><span>Obese</span></div>
       <div style="text-align:center;"><span class="bmi-status-pill" style="background:${statusColor}22; color:${statusColor};">${bmiStatus}</span></div>
     `;
+  }
+
+  // ── Billing ──────────────────────────────────────────────
+  let selectedPlan = 'monthly';
+
+  function checkBillingRedirect() {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get('billing');
+    if (!result) return;
+    if (result === 'success') toast('🎉 Welcome to NutriSnap AI Pro!');
+    else if (result === 'cancelled') toast('Checkout cancelled', true);
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  async function loadBilling() {
+    try {
+      const data = await authedFetch('/api/v1/billing/status');
+      renderBilling(data.data);
+    } catch(e) {
+      document.getElementById('billingCard').innerHTML = `<div class="empty-note">❌ ${e.message}</div>`;
+    }
+  }
+
+  function renderBilling(d) {
+    const el = document.getElementById('billingCard');
+    if (d.plan === 'pro' && d.status === 'active') {
+      const renews = d.currentPeriodEnd ? new Date(d.currentPeriodEnd).toLocaleDateString() : '—';
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="section-title" style="margin-bottom:0;">💎 Subscription</div>
+          <span class="pro-badge">PRO</span>
+        </div>
+        <div style="font-size:13px;color:var(--sub);margin-bottom:14px;">Renews on ${renews}</div>
+        <button class="btn btn-g" style="width:100%;" onclick="openBillingPortal()">⚙️ Manage Subscription</button>
+      `;
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="section-title" style="margin-bottom:12px;">💎 Upgrade to Pro</div>
+      <div class="plan-toggle">
+        <button class="plan-toggle-opt ${selectedPlan==='monthly'?'active':''}" onclick="selectPlan('monthly')">Monthly</button>
+        <button class="plan-toggle-opt ${selectedPlan==='annual'?'active':''}" onclick="selectPlan('annual')">Annual</button>
+      </div>
+      <div class="plan-price">
+        <div class="amount" id="planAmount">${selectedPlan==='annual' ? '$39.99<span>/yr</span>' : '$4.99<span>/mo</span>'}</div>
+        <div class="save" id="planSave" style="${selectedPlan==='annual'?'':'visibility:hidden;'}">Save 33% vs monthly</div>
+      </div>
+      <button class="btn btn-p" style="width:100%;" onclick="startCheckout()">🚀 Upgrade Now</button>
+    `;
+  }
+
+  function selectPlan(plan) {
+    selectedPlan = plan;
+    document.querySelectorAll('.plan-toggle-opt').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === plan));
+    document.getElementById('planAmount').innerHTML = plan==='annual' ? '$39.99<span>/yr</span>' : '$4.99<span>/mo</span>';
+    document.getElementById('planSave').style.visibility = plan==='annual' ? 'visible' : 'hidden';
+  }
+
+  async function startCheckout() {
+    try {
+      const data = await authedFetch('/api/v1/billing/create-checkout-session', {
+        method: 'POST', body: JSON.stringify({ plan: selectedPlan })
+      });
+      window.location.href = data.data.url;
+    } catch(e) { toast('❌ ' + e.message, true); }
+  }
+
+  async function openBillingPortal() {
+    try {
+      const data = await authedFetch('/api/v1/billing/create-portal-session', { method:'POST' });
+      window.location.href = data.data.url;
+    } catch(e) { toast('❌ ' + e.message, true); }
   }
 
   // ── Google Health ────────────────────────────────────────
