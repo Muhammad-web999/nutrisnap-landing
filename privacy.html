@@ -1,186 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Privacy Policy — NutriSnap AI</title>
 <style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 40px 24px 80px;
-    color: #1a1a1a;
-    line-height: 1.65;
-    background: #fafafa;
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{--primary:#00C896;--secondary:#6C63FF;--dark:#0D0D1A;--sub:#AAB4C8;--border:rgba(255,255,255,0.1);}
+  body{background:var(--dark);color:#fff;font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;}
+  .wrap{max-width:760px;margin:0 auto;padding:60px 24px 100px;}
+  .logo{font-size:22px;font-weight:900;margin-bottom:8px;} .logo span{color:var(--primary);}
+  .updated{color:var(--sub);font-size:13px;margin-bottom:40px;}
+  h1{font-size:32px;font-weight:900;margin-bottom:8px;}
+  h2{font-size:19px;font-weight:800;margin:36px 0 12px;color:var(--primary);}
+  h3{font-size:16px;font-weight:700;margin:20px 0 8px;color:#fff;}
+  p,li{color:#ccc;font-size:15px;margin-bottom:12px;}
+  ul{padding-left:22px;margin-bottom:12px;}
+  a{color:var(--primary);}
+  .box{
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px 22px;
+    margin:14px 0 20px;
   }
-  h1 {
-    font-size: 1.9rem;
-    margin-bottom: 4px;
+  .box ul{margin-bottom:0;}
+  .box p:last-child{margin-bottom:0;}
+  .highlight{
+    background:rgba(0,200,150,0.08);
+    border-left:3px solid var(--primary);
+    padding:16px 20px;
+    border-radius:6px;
+    margin:24px 0;
   }
-  .updated {
-    color: #666;
-    font-size: 0.9rem;
-    margin-bottom: 32px;
-  }
-  h2 {
-    font-size: 1.25rem;
-    margin-top: 40px;
-    margin-bottom: 10px;
-    border-bottom: 2px solid #10b981;
-    padding-bottom: 6px;
-  }
-  h3 {
-    font-size: 1.05rem;
-    margin-top: 20px;
-    margin-bottom: 6px;
-  }
-  p, li { color: #333; }
-  ul { padding-left: 22px; }
-  li { margin-bottom: 6px; }
-  .box {
-    background: #fff;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    padding: 20px 24px;
-    margin: 16px 0;
-  }
-  .highlight {
-    background: #ecfdf5;
-    border-left: 4px solid #10b981;
-    padding: 14px 18px;
-    border-radius: 6px;
-    margin: 20px 0;
-  }
-  a { color: #10b981; }
-  footer {
-    margin-top: 60px;
-    font-size: 0.85rem;
-    color: #888;
-    border-top: 1px solid #e5e5e5;
-    padding-top: 20px;
-  }
+  .highlight p{margin-bottom:0;color:#e5e5e5;}
+  .back{display:inline-block;margin-top:40px;color:var(--sub);text-decoration:none;font-size:14px;}
+  .back:hover{color:var(--primary);}
 </style>
 </head>
 <body>
+<div class="wrap">
+  <div class="logo">🌟 NutriSnap <span>AI</span></div>
+  <h1>Privacy Policy</h1>
+  <div class="updated">Last updated: September 2, 2026</div>
 
-<h1>Privacy Policy — NutriSnap AI</h1>
-<p class="updated">Last updated: September 2, 2026</p>
+  <p>NutriSnap AI ("we," "our," or "the app") is a nutrition and meal-tracking app built for Pakistani and South Asian users. This policy explains what information we collect, why we collect it, and how you can control or delete it.</p>
 
-<p>NutriSnap AI ("we," "our," or "the app") is a nutrition and meal-tracking app built for Pakistani and South Asian users. This policy explains what information we collect, why we collect it, and how you can control or delete it.</p>
+  <div class="highlight">
+    <p><strong>Quick summary:</strong> We collect the health, meal, and account data you give us or connect to us, we use it to power the app's features, we don't sell your data, and you can delete your account and all associated data at any time from within the app.</p>
+  </div>
 
-<div class="highlight">
-  <strong>Quick summary:</strong> We collect the health, meal, and account data you give us or connect to us, we use it to power the app's features, we don't sell your data, and you can delete your account and all associated data at any time from within the app.
-</div>
+  <h2>1. Information We Collect</h2>
 
-<h2>1. Information We Collect</h2>
+  <h3>Account Information</h3>
+  <div class="box">
+    <ul>
+      <li>Name and email address</li>
+      <li>Age and gender</li>
+      <li>Height and weight</li>
+      <li>Fitness goal (e.g. lose, maintain, gain), activity level, and daily calorie target</li>
+      <li>Subscription plan status (free or paid)</li>
+    </ul>
+  </div>
 
-<h3>Account Information</h3>
-<div class="box">
+  <h3>Health Data (Google Health)</h3>
+  <div class="box">
+    <p>If you choose to connect Google Health, we access:</p>
+    <ul>
+      <li>Your daily step count</li>
+      <li>Your weight</li>
+    </ul>
+    <p>We store a secure access token to keep this connection active. You can disconnect Google Health at any time in the app, which permanently deletes this token and stops any further access.</p>
+  </div>
+
+  <h3>Meal &amp; Nutrition Data</h3>
+  <div class="box">
+    <ul>
+      <li>Photos of meals you scan (sent to Google's Gemini AI for analysis)</li>
+      <li>Calories, protein, carbs, and fat for each meal you log</li>
+      <li>Meal type (breakfast, lunch, dinner, snack) and time logged</li>
+    </ul>
+  </div>
+
+  <h3>AI Nutritionist Chat</h3>
+  <div class="box">
+    <p>Messages you send to the in-app AI nutritionist chat are sent to Google's Gemini AI, along with relevant profile stats (like your calorie goal and recent meals), so it can give you personalized responses.</p>
+  </div>
+
+  <h3>Social Features</h3>
+  <div class="box">
+    <ul>
+      <li>Friend connections (added by email)</li>
+      <li>Your points, streaks, and leaderboard rank, which are visible to your added friends</li>
+    </ul>
+  </div>
+
+  <h3>Payment Information</h3>
+  <div class="box">
+    <p>Subscription payments are processed by Stripe. We do not store your card number or payment details ourselves — only your subscription status (e.g. active, plan type).</p>
+  </div>
+
+  <h3>Communications</h3>
+  <div class="box">
+    <p>We use your email address to send welcome messages, streak reminders, and weekly progress reports. You can request to stop receiving these at any time.</p>
+  </div>
+
+  <h3>Feedback</h3>
+  <div class="box">
+    <p>If you submit feedback, we store your rating, category, and message.</p>
+  </div>
+
+  <h2>2. How We Use Your Information</h2>
   <ul>
-    <li>Name and email address</li>
-    <li>Age and gender</li>
-    <li>Height and weight</li>
-    <li>Fitness goal (e.g. lose, maintain, gain), activity level, and daily calorie target</li>
-    <li>Subscription plan status (free or paid)</li>
+    <li>To provide core features: meal tracking, calorie/macro calculations, and BMI</li>
+    <li>To analyze meal photos and generate nutrition estimates using AI</li>
+    <li>To power the AI nutritionist chat with context about your goals and progress</li>
+    <li>To sync your steps and weight if you connect Google Health</li>
+    <li>To run gamification features (points, streaks, badges, challenges)</li>
+    <li>To enable friend connections and leaderboards, if you choose to use them</li>
+    <li>To process subscription payments via Stripe</li>
+    <li>To send account-related and progress emails</li>
+    <li>To improve the app based on feedback you submit</li>
   </ul>
-</div>
 
-<h3>Health Data (Google Health)</h3>
-<div class="box">
-  <p>If you choose to connect Google Health, we access:</p>
+  <h2>3. Who We Share Data With</h2>
+  <p>We do not sell your personal data. We share data only with the services that power the app's features:</p>
   <ul>
-    <li>Your daily step count</li>
-    <li>Your weight</li>
+    <li><strong>Google Gemini AI</strong> — receives meal photos and chat messages to generate nutrition analysis and responses</li>
+    <li><strong>Google Health</strong> — provides step and weight data if you connect it</li>
+    <li><strong>Firebase</strong> — handles your account login and authentication</li>
+    <li><strong>Stripe</strong> — processes subscription payments</li>
+    <li><strong>SendGrid</strong> — delivers account and reminder emails</li>
   </ul>
-  <p>We store a secure access token to keep this connection active. You can disconnect Google Health at any time in the app, which permanently deletes this token and stops any further access.</p>
-</div>
+  <p>Each of these providers has its own privacy practices governing how they handle the data we send them.</p>
 
-<h3>Meal &amp; Nutrition Data</h3>
-<div class="box">
+  <h2>4. Data Storage &amp; Security</h2>
+  <p>Your data is stored in a PostgreSQL database hosted on Railway, with access restricted to authenticated requests only. We take reasonable steps to protect your information, but no system can guarantee complete security.</p>
+
+  <h2>5. Your Rights &amp; Choices</h2>
   <ul>
-    <li>Photos of meals you scan (sent to Google's Gemini AI for analysis)</li>
-    <li>Calories, protein, carbs, and fat for each meal you log</li>
-    <li>Meal type (breakfast, lunch, dinner, snack) and time logged</li>
+    <li><strong>Delete your account:</strong> You can permanently delete your account and all associated data at any time from within the app. This removes your profile, meals, health connection, friendships, and login credentials.</li>
+    <li><strong>Disconnect Google Health:</strong> You can disconnect this at any time without deleting your whole account.</li>
+    <li><strong>Manage friends:</strong> You can remove friends at any time, which stops them from seeing your points and streaks.</li>
+    <li><strong>Email preferences:</strong> You can request to stop receiving reminder or report emails.</li>
   </ul>
+
+  <h2>6. Children's Privacy</h2>
+  <p>NutriSnap AI is not directed at children under 13, and we do not knowingly collect data from children under 13.</p>
+
+  <h2>7. Changes to This Policy</h2>
+  <p>We may update this policy as the app evolves. We'll update the "Last updated" date above when changes are made.</p>
+
+  <h2>8. Contact Us</h2>
+  <p>If you have questions about this Privacy Policy or your data, contact us at: <a href="mailto:muhammad.it.999@gmail.com">support@nutrisnap.ai</a></p>
+
+  <a class="back" href="index.html">← Back to NutriSnap AI</a>
 </div>
-
-<h3>AI Nutritionist Chat</h3>
-<div class="box">
-  <p>Messages you send to the in-app AI nutritionist chat are sent to Google's Gemini AI, along with relevant profile stats (like your calorie goal and recent meals), so it can give you personalized responses.</p>
-</div>
-
-<h3>Social Features</h3>
-<div class="box">
-  <ul>
-    <li>Friend connections (added by email)</li>
-    <li>Your points, streaks, and leaderboard rank, which are visible to your added friends</li>
-  </ul>
-</div>
-
-<h3>Payment Information</h3>
-<div class="box">
-  <p>Subscription payments are processed by Stripe. We do not store your card number or payment details ourselves — only your subscription status (e.g. active, plan type).</p>
-</div>
-
-<h3>Communications</h3>
-<div class="box">
-  <p>We use your email address to send welcome messages, streak reminders, and weekly progress reports. You can request to stop receiving these at any time.</p>
-</div>
-
-<h3>Feedback</h3>
-<div class="box">
-  <p>If you submit feedback, we store your rating, category, and message.</p>
-</div>
-
-<h2>2. How We Use Your Information</h2>
-<ul>
-  <li>To provide core features: meal tracking, calorie/macro calculations, and BMI</li>
-  <li>To analyze meal photos and generate nutrition estimates using AI</li>
-  <li>To power the AI nutritionist chat with context about your goals and progress</li>
-  <li>To sync your steps and weight if you connect Google Health</li>
-  <li>To run gamification features (points, streaks, badges, challenges)</li>
-  <li>To enable friend connections and leaderboards, if you choose to use them</li>
-  <li>To process subscription payments via Stripe</li>
-  <li>To send account-related and progress emails</li>
-  <li>To improve the app based on feedback you submit</li>
-</ul>
-
-<h2>3. Who We Share Data With</h2>
-<p>We do not sell your personal data. We share data only with the services that power the app's features:</p>
-<ul>
-  <li><strong>Google Gemini AI</strong> — receives meal photos and chat messages to generate nutrition analysis and responses</li>
-  <li><strong>Google Health</strong> — provides step and weight data if you connect it</li>
-  <li><strong>Firebase</strong> — handles your account login and authentication</li>
-  <li><strong>Stripe</strong> — processes subscription payments</li>
-  <li><strong>SendGrid</strong> — delivers account and reminder emails</li>
-</ul>
-<p>Each of these providers has its own privacy practices governing how they handle the data we send them.</p>
-
-<h2>4. Data Storage &amp; Security</h2>
-<p>Your data is stored in a PostgreSQL database hosted on Railway, with access restricted to authenticated requests only. We take reasonable steps to protect your information, but no system can guarantee complete security.</p>
-
-<h2>5. Your Rights &amp; Choices</h2>
-<ul>
-  <li><strong>Delete your account:</strong> You can permanently delete your account and all associated data at any time from within the app. This removes your profile, meals, health connection, friendships, and login credentials.</li>
-  <li><strong>Disconnect Google Health:</strong> You can disconnect this at any time without deleting your whole account.</li>
-  <li><strong>Manage friends:</strong> You can remove friends at any time, which stops them from seeing your points and streaks.</li>
-  <li><strong>Email preferences:</strong> You can request to stop receiving reminder or report emails.</li>
-</ul>
-
-<h2>6. Children's Privacy</h2>
-<p>NutriSnap AI is not directed at children under 13, and we do not knowingly collect data from children under 13.</p>
-
-<h2>7. Changes to This Policy</h2>
-<p>We may update this policy as the app evolves. We'll update the "Last updated" date above when changes are made.</p>
-
-<h2>8. Contact Us</h2>
-<p>If you have questions about this Privacy Policy or your data, contact us at: <a href="mailto:muhammad.it.999@gmail.com">support@nutrisnap.ai</a></p>
-
-<footer>
-  NutriSnap AI — Snap. Track. Thrive.
-</footer>
-
 </body>
 </html>
