@@ -1002,7 +1002,62 @@
       const data = await authedFetch('/api/v1/gamification/claim-reward', { method:'POST', body: JSON.stringify({ reward_id: rewardId }) });
       toast('🎉 ' + data.message);
       await loadStats();
+
+      if (rewardId === 'r3') {
+        await deliverDietPlanReward();
+      } else if (rewardId === 'r5') {
+        await deliverPdfReportReward();
+      }
     } catch(e) { toast('❌ ' + e.message, true); }
+  }
+
+  async function deliverDietPlanReward() {
+    try {
+      toast('🧠 Generating your AI diet plan...');
+      const data = await authedFetch('/api/v1/ai/diet-plan', { method: 'POST' });
+      showDietPlanModal(data.data);
+    } catch(e) { toast('❌ Could not generate diet plan: ' + e.message, true); }
+  }
+
+  function showDietPlanModal(plan) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    const rows = plan.map(m => `
+      <div style="padding:10px 0;border-top:1px solid var(--border);">
+        <div style="font-weight:700;font-size:13px;">${escapeHtml(m.meal)} <span style="color:var(--sub);font-weight:400;">· ${escapeHtml(m.time || '')}</span></div>
+        <div style="font-size:12px;color:#ddd;margin-top:2px;">${escapeHtml(m.food)}</div>
+        <div style="font-size:11px;color:var(--g);margin-top:2px;">${m.cal} kcal</div>
+      </div>`).join('');
+    overlay.innerHTML = `
+      <div class="glass" style="max-width:420px;width:100%;max-height:80vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div class="section-title" style="margin-bottom:0;">🥗 Your AI Diet Plan</div>
+          <button class="link-btn" onclick="this.closest('div[style*=fixed]').remove()" style="font-size:18px;">✕</button>
+        </div>
+        ${rows}
+      </div>`;
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+  }
+
+  async function deliverPdfReportReward() {
+    try {
+      toast('📄 Generating your nutrition report...');
+      const user = auth.currentUser;
+      const token = await user.getIdToken();
+      const res = await fetch(API_BASE + '/api/v1/reports/nutrition-pdf', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+      });
+      if (!res.ok) throw new Error('Report generation failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'nutrisnap-report.pdf';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast('✅ Report downloaded!');
+    } catch(e) { toast('❌ Could not generate report: ' + e.message, true); }
   }
 
   // ── SOCIAL ───────────────────────────────────────────────
