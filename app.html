@@ -802,7 +802,11 @@
   async function syncGoogleHealth() {
     try {
       const data = await authedFetch('/api/v1/health-sync/refresh', { method:'POST' });
-      toast(`✅ Synced! ${data.data.steps ?? 0} steps, ${data.data.weightKg ?? '—'}kg`);
+      if (data.data.partialWarning) {
+        toast('⚠️ ' + data.data.partialWarning, true);
+      } else {
+        toast(`✅ Synced! ${data.data.steps ?? 0} steps, ${data.data.weightKg ?? '—'}kg`);
+      }
       await loadHealthSync();
       await loadProfile();
     } catch(e) { toast('❌ ' + e.message, true); }
