@@ -366,6 +366,9 @@
 
     <!-- ANALYTICS -->
     <div class="tab-panel hidden" id="panel-analytics">
+      <div class="glass" id="aiSuggestionsCard">
+        <div class="empty-note">Loading...</div>
+      </div>
       <div id="analyticsContent">
         <div class="empty-note">Loading your analytics...</div>
       </div>
@@ -1103,9 +1106,61 @@
     try {
       const data = await authedFetch('/api/v1/analytics/overview');
       renderAnalytics(data.data);
+      loadAiSuggestions(); // fire-and-forget, renders into its own card once ready
     } catch(e) {
       document.getElementById('analyticsContent').innerHTML = `<div class="empty-note">❌ ${e.message}</div>`;
     }
+  }
+
+  async function loadAiSuggestions() {
+    const el = document.getElementById('aiSuggestionsCard');
+    if (!el) return;
+    const isPro = latestData && latestData.isProActive;
+
+    if (!isPro) {
+      el.innerHTML = `
+        <div class="section-title" style="margin-bottom:8px;">🧠 AI-Personalized Suggestions</div>
+        <div class="empty-note">🔒 Get weekly & monthly AI advice tailored to your goal with Pro.</div>
+        <button class="btn btn-g" style="width:100%;margin-top:8px;" onclick="switchTab('profile')">💎 Upgrade to Pro</button>
+      `;
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="section-title" style="margin-bottom:10px;">🧠 AI-Personalized Suggestions</div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--sub);font-weight:700;margin-bottom:4px;">📅 This Week</div>
+        <div class="empty-note" id="weeklySuggestionText">Loading your weekly insight...</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--sub);font-weight:700;margin-bottom:4px;">🗓️ This Month</div>
+        <div class="empty-note" id="monthlySuggestionText">Loading your monthly insight...</div>
+      </div>
+    `;
+
+    authedFetch('/api/v1/ai/weekly-suggestion').then(res => {
+      const el2 = document.getElementById('weeklySuggestionText');
+      if (!el2) return;
+      if (res.data.suggestion) el2.textContent = res.data.suggestion;
+      else el2.textContent = 'Log a few meals this week to get your first personalized insight!';
+      el2.className = '';
+      el2.style.cssText = 'font-size:13px;color:#ddd;line-height:1.6;';
+    }).catch(e => {
+      const el2 = document.getElementById('weeklySuggestionText');
+      if (el2) el2.textContent = '❌ ' + e.message;
+    });
+
+    authedFetch('/api/v1/ai/monthly-suggestion').then(res => {
+      const el2 = document.getElementById('monthlySuggestionText');
+      if (!el2) return;
+      if (res.data.suggestion) el2.textContent = res.data.suggestion;
+      else el2.textContent = 'Log meals throughout the month to get your first monthly insight!';
+      el2.className = '';
+      el2.style.cssText = 'font-size:13px;color:#ddd;line-height:1.6;';
+    }).catch(e => {
+      const el2 = document.getElementById('monthlySuggestionText');
+      if (el2) el2.textContent = '❌ ' + e.message;
+    });
   }
 
   function renderAnalytics(d) {
