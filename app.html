@@ -175,6 +175,7 @@
   .btn { border:none; border-radius:12px; padding:12px 20px; font-weight:700; font-size:14px; cursor:pointer; }
   .btn-p { background:linear-gradient(135deg,var(--p),var(--s)); color:#fff; box-shadow:0 4px 16px rgba(0,200,150,0.3); }
   .btn-a { background:rgba(255,107,107,0.15); color:var(--a); border:1px solid rgba(255,107,107,0.3); }
+  .btn-g { background:linear-gradient(135deg,var(--g),var(--o)); color:#0D0D1A; box-shadow:0 4px 16px rgba(255,215,0,0.25); }
   .loading-icon { font-size:52px; animation:pulse 1s infinite; }
   .nut-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; }
   .nut-box { border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:10px; }
@@ -674,21 +675,41 @@
 
   function renderBilling(d) {
     const el = document.getElementById('billingCard');
-    if (d.plan === 'pro' && d.status === 'active') {
+    if (d.isProActive) {
+      const isPaid = d.plan === 'pro' && d.status === 'active';
       const renews = d.currentPeriodEnd ? new Date(d.currentPeriodEnd).toLocaleDateString() : '—';
+      const rewardUntil = d.rewardProUntil ? new Date(d.rewardProUntil).toLocaleDateString() : null;
       el.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <div class="section-title" style="margin-bottom:0;">💎 Subscription</div>
           <span class="pro-badge">PRO</span>
         </div>
-        <div style="font-size:13px;color:var(--sub);margin-bottom:14px;">Renews on ${renews}</div>
-        <button class="btn btn-g" style="width:100%;" onclick="openBillingPortal()">⚙️ Manage Subscription</button>
+        <div style="font-size:13px;color:var(--sub);margin-bottom:14px;">
+          ${isPaid ? `Renews on ${renews}` : `Bonus Pro access from rewards, active until ${rewardUntil}`}
+        </div>
+        ${isPaid ? `<button class="btn btn-p" style="width:100%;" onclick="openBillingPortal()">⚙️ Manage Subscription</button>` : `<button class="btn btn-p" style="width:100%;" onclick="selectedPlan='monthly';renderBilling({...${JSON.stringify(d)}, isProActive:false, plan:'free'});" disabled style="opacity:.5;">You already have Pro access</button>`}
       `;
       return;
     }
 
     el.innerHTML = `
       <div class="section-title" style="margin-bottom:12px;">💎 Upgrade to Pro</div>
+      <div class="glass" style="background:rgba(255,255,255,0.03); margin-bottom:14px; padding:12px 14px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--sub); font-weight:700; margin-bottom:8px;"><span></span><span>Free</span><span style="color:var(--g);">Pro</span></div>
+        ${[
+          ['AI meal scans', '4/day', 'Unlimited'],
+          ['AI nutritionist chat', '15 msgs/day', 'Unlimited'],
+          ['Ads', 'May show', 'None'],
+          ['Google Health sync', 'Not available', 'Included'],
+          ['Weekly/monthly analytics', 'Basic', 'AI-personalized'],
+        ].map(([label, free, pro]) => `
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:6px 0; border-top:1px solid var(--border);">
+            <span style="flex:1.4;">${label}</span>
+            <span style="flex:1; text-align:center; color:var(--sub);">${free}</span>
+            <span style="flex:1; text-align:center; color:var(--g); font-weight:700;">${pro}</span>
+          </div>
+        `).join('')}
+      </div>
       <div class="plan-toggle">
         <button class="plan-toggle-opt ${selectedPlan==='monthly'?'active':''}" onclick="selectPlan('monthly')">Monthly</button>
         <button class="plan-toggle-opt ${selectedPlan==='annual'?'active':''}" onclick="selectPlan('annual')">Annual</button>
@@ -731,6 +752,7 @@
     if (!result) return;
     if (result === 'connected') { toast('✅ Google Health connected!'); syncGoogleHealth(); }
     else if (result === 'denied') toast('Connection cancelled', true);
+    else if (result === 'upgrade_required') toast('❌ Google Health sync is a Pro feature. Upgrade to connect.', true);
     else toast('❌ Something went wrong connecting Google Health', true);
     window.history.replaceState({}, '', window.location.pathname);
   }
@@ -746,6 +768,11 @@
 
   function renderHealthSync(d) {
     const el = document.getElementById('healthSyncContent');
+    const isPro = latestData && latestData.isProActive;
+    if (!isPro) {
+      el.innerHTML = `<div class="empty-note">🔒 Google Health sync is a Pro feature.</div><button class="btn btn-p" style="width:100%;" onclick="switchTab('profile')">💎 Upgrade to Pro to unlock</button>`;
+      return;
+    }
     if (!d.connected) {
       el.innerHTML = `<button class="btn btn-p" style="width:100%;" onclick="connectGoogleHealth()">🔗 Connect Google Health</button>`;
       return;
@@ -884,14 +911,14 @@
     document.getElementById('statBadges').textContent = d.badges.length;
 
     document.getElementById('recentBadges').innerHTML = d.badges.length
-      ? d.badges.slice(0,8).map(b => `<div class="badge-mini"><div class="icon">${b.icon}</div><div class="name">${b.title}</div><div class="pts">+${b.points}pts</div></div>`).join('')
+      ? d.badges.slice(0,8).map(b => `<div class="badge-mini"><div class="icon">${b.icon}</div><div class="name">${escapeHtml(b.title)}</div><div class="pts">+${b.points}pts</div></div>`).join('')
       : `<div style="grid-column:1/-1;text-align:center;color:var(--sub);font-size:12px;padding:16px;">Log meals to earn badges! 🏆</div>`;
 
     const lbHtml = (arr) => arr.map(u => `
       <div class="lb-row ${u.isMe ? 'me' : ''}">
         <div style="width:24px;text-align:center;">${u.rank<=3 ? ['🥇','🥈','🥉'][u.rank-1] : '#'+u.rank}</div>
-        <div class="avatar">${u.name.slice(0,2).toUpperCase()}</div>
-        <div style="flex:1;"><div class="lb-name">${u.name}</div><div class="lb-streak">🔥 ${u.streak||0} day streak</div></div>
+        <div class="avatar">${escapeHtml(u.name.slice(0,2).toUpperCase())}</div>
+        <div style="flex:1;"><div class="lb-name">${escapeHtml(u.name)}</div><div class="lb-streak">🔥 ${u.streak||0} day streak</div></div>
         <div class="lb-pts">⭐ ${u.points.toLocaleString()}</div>
       </div>`).join('');
     document.getElementById('lbPreview').innerHTML = lbHtml(d.leaderboard.slice(0,3));
@@ -908,7 +935,7 @@
       }
       return `<div class="glass badge-full ${earned?'':'locked'}">
         <div class="icon">${b.icon}</div>
-        <div class="name">${b.title}</div>
+        <div class="name">${escapeHtml(b.title)}</div>
         <div class="pill">+${b.points} pts</div>
         ${progressLabel}
       </div>`;
@@ -919,7 +946,7 @@
       const canAfford = d.points >= r.cost;
       return `<div class="glass"><div class="reward-row">
         <div class="reward-icon">🎁</div>
-        <div style="flex:1;"><div class="reward-name">${r.title}</div><div class="reward-desc">${r.cost} points</div></div>
+        <div style="flex:1;"><div class="reward-name">${escapeHtml(r.title)}</div><div class="reward-desc">${r.cost} points</div></div>
         <button class="claim" ${canAfford?'':'disabled'} onclick="claimReward('${r.id}')">${canAfford?'Claim':'Need '+(r.cost-d.points)+' more'}</button>
       </div></div>`;
     }).join('');
@@ -949,7 +976,7 @@
         <div class="chal-card">
           <div class="chal-icon" style="background:${color}22;border-color:${color}44;">${c.icon}</div>
           <div class="chal-body">
-            <div class="chal-top"><div class="chal-title">${c.title}</div><div class="chal-pts">+${c.points}</div></div>
+            <div class="chal-top"><div class="chal-title">${escapeHtml(c.title)}</div><div class="chal-pts">+${c.points}</div></div>
             <div class="chal-expires">⏰ ${c.expires}</div>
             <div class="chal-bar-track"><div class="chal-bar-fill" style="width:${pct}%;background:${done?'linear-gradient(90deg,var(--p),var(--g))':color};"></div></div>
             <div class="chal-bottom"><div class="chal-progress-txt">${c.progress}/${c.target} completed</div>${actionHtml}</div>
@@ -995,7 +1022,7 @@
       const data = await authedFetch('/api/v1/social/friends/requests');
       document.getElementById('socialRequests').innerHTML = data.data.length
         ? data.data.map(r => `<div class="req-row">
-            <div><div class="req-name">${r.name}</div><div class="req-email">${r.email}</div></div>
+            <div><div class="req-name">${escapeHtml(r.name)}</div><div class="req-email">${escapeHtml(r.email)}</div></div>
             <div><button class="btn-sm accept" onclick="respondRequest(${r.id},'accept')">Accept</button>
             <button class="btn-sm decline" onclick="respondRequest(${r.id},'decline')">Decline</button></div>
           </div>`).join('')
@@ -1016,8 +1043,8 @@
       const data = await authedFetch('/api/v1/social/friends');
       document.getElementById('socialFriends').innerHTML = data.data.length
         ? data.data.map(f => `<div class="lb-row">
-            <div class="avatar">${f.name.slice(0,2).toUpperCase()}</div>
-            <div style="flex:1;"><div class="lb-name">${f.name}</div><div class="lb-streak">🔥 ${f.streak_days||0} day streak</div></div>
+            <div class="avatar">${escapeHtml(f.name.slice(0,2).toUpperCase())}</div>
+            <div style="flex:1;"><div class="lb-name">${escapeHtml(f.name)}</div><div class="lb-streak">🔥 ${f.streak_days||0} day streak</div></div>
             <div class="lb-pts">⭐ ${(f.points||0).toLocaleString()}</div>
           </div>`).join('')
         : `<div class="empty-note">No friends yet — send a request above!</div>`;
@@ -1029,8 +1056,8 @@
       const data = await authedFetch('/api/v1/social/leaderboard');
       document.getElementById('socialLeaderboard').innerHTML = data.data.map(u => `<div class="lb-row ${u.isMe?'me':''}">
           <div style="width:24px;text-align:center;">${u.rank<=3?['🥇','🥈','🥉'][u.rank-1]:'#'+u.rank}</div>
-          <div class="avatar">${u.name.slice(0,2).toUpperCase()}</div>
-          <div style="flex:1;"><div class="lb-name">${u.name}</div><div class="lb-streak">🔥 ${u.streak||0} day streak</div></div>
+          <div class="avatar">${escapeHtml(u.name.slice(0,2).toUpperCase())}</div>
+          <div style="flex:1;"><div class="lb-name">${escapeHtml(u.name)}</div><div class="lb-streak">🔥 ${u.streak||0} day streak</div></div>
           <div class="lb-pts">⭐ ${u.points.toLocaleString()}</div>
         </div>`).join('');
     } catch(e) { document.getElementById('socialLeaderboard').innerHTML = `<div class="empty-note">❌ ${e.message}</div>`; }
@@ -1043,7 +1070,7 @@
     const wrap = document.getElementById('chatMessages');
     const div = document.createElement('div');
     div.className = 'chat-bubble ' + (role === 'user' ? 'user' : 'bot') + (isLoading ? ' loading' : '');
-    div.innerHTML = `<div class="chat-avatar">${role === 'user' ? '🙂' : '🩺'}</div><div class="chat-text">${text}</div>`;
+    div.innerHTML = `<div class="chat-avatar">${role === 'user' ? '🙂' : '🩺'}</div><div class="chat-text">${escapeHtml(text)}</div>`;
     if (isLoading) div.id = 'chatLoadingBubble';
     wrap.appendChild(div);
     wrap.scrollTop = wrap.scrollHeight;
