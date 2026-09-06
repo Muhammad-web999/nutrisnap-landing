@@ -494,6 +494,15 @@
     }
   });
 
+  // Escapes text before inserting into innerHTML, to prevent malicious content
+  // (e.g. someone setting their display name to include HTML/script tags) from
+  // running in other users' browsers on the leaderboard, friends list, etc.
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
   initCustomSelects();
   const auth = firebase.auth();
   const API_BASE = "https://nutrisnap-ai-backend-production.up.railway.app";
