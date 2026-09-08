@@ -189,6 +189,7 @@
 <div class="toast" id="toast"></div>
 <div class="float-pts" id="floatPts"></div>
 <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFile(this)">
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFile(this)">
 
 <!-- LOADING -->
 <div id="loadingView" class="loading">Checking your session...</div>
@@ -243,7 +244,8 @@
         <div style="font-weight:800;font-size:16px;margin-bottom:6px;">Snap Your Meal</div>
         <div style="color:var(--sub);font-size:12px;">AI-powered recognition for Pakistani &amp; global cuisines</div>
         <div class="scan-btns">
-          <button class="btn btn-p" onclick="document.getElementById('fileInput').click()">📁 Upload Photo</button>
+          <button class="btn btn-p" onclick="document.getElementById('cameraInput').click()">📷 Take Snap</button>
+          <button class="btn btn-a" onclick="document.getElementById('fileInput').click()">📁 Upload Photo</button>
         </div>
       </div>
 
@@ -378,6 +380,14 @@
     <div class="tab-panel hidden" id="panel-profile">
       <div class="glass" id="billingCard">
         <div class="empty-note">Loading...</div>
+      </div>
+
+      <div class="glass">
+        <div class="section-title" style="margin-bottom:4px;">🏷️ Username</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:12px;">Shown on leaderboards and to friends instead of your email. Must be unique.</div>
+        <input type="text" id="usernameInput" placeholder="Choose a username" maxlength="30">
+        <button class="primary" onclick="saveUsername()">Save Username</button>
+        <div class="err" id="usernameErr" style="display:none;"></div>
       </div>
 
       <div class="glass" id="profileBmiCard" style="text-align:center;">
@@ -833,6 +843,7 @@
     try {
       const data = await authedFetch('/api/v1/auth/me');
       const u = data.data;
+      document.getElementById('usernameInput').value = u.username || '';
       document.getElementById('profAge').value = u.age || '';
       setSelectValue('profGender', u.gender || 'other');
       document.getElementById('profWeight').value = u.weight_kg || '';
@@ -855,6 +866,21 @@
       toast(data.success ? `✅ ${label} email sent — check your inbox!` : `❌ ${data.message}`, !data.success);
     } catch(e) {
       toast('❌ ' + e.message, true);
+    }
+  }
+
+  async function saveUsername() {
+    const username = document.getElementById('usernameInput').value.trim();
+    const errEl = document.getElementById('usernameErr');
+    errEl.style.display = 'none';
+    if (!username) { errEl.textContent = 'Enter a username'; errEl.style.display = 'block'; return; }
+    try {
+      await authedFetch('/api/v1/users/username', { method: 'PUT', body: JSON.stringify({ username }) });
+      toast('✅ Username updated!');
+      await loadStats();
+    } catch(e) {
+      errEl.textContent = '❌ ' + e.message;
+      errEl.style.display = 'block';
     }
   }
 
@@ -1114,8 +1140,8 @@
       const data = await authedFetch('/api/v1/social/friends');
       document.getElementById('socialFriends').innerHTML = data.data.length
         ? data.data.map(f => `<div class="lb-row">
-            <div class="avatar">${escapeHtml(f.name.slice(0,2).toUpperCase())}</div>
-            <div style="flex:1;"><div class="lb-name">${escapeHtml(f.name)}</div><div class="lb-streak">🔥 ${f.streak_days||0} day streak</div></div>
+            <div class="avatar">${escapeHtml((f.username||'??').slice(0,2).toUpperCase())}</div>
+            <div style="flex:1;"><div class="lb-name">${escapeHtml(f.username)}</div><div class="lb-streak">🔥 ${f.streak_days||0} day streak</div></div>
             <div class="lb-pts">⭐ ${(f.points||0).toLocaleString()}</div>
           </div>`).join('')
         : `<div class="empty-note">No friends yet — send a request above!</div>`;
