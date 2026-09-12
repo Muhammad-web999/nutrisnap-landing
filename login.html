@@ -143,25 +143,16 @@
     errEl.style.display = 'none';
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
-      await auth.signInWithRedirect(provider);
-      // Browser navigates away to Google's sign-in page here; result is handled
-      // by getRedirectResult() below once the user is sent back.
+      const result = await auth.signInWithPopup(provider);
+      if (result.user) {
+        window.location.href = 'app.html';
+      }
     } catch(e) {
+      if (e.code === 'auth/popup-closed-by-user') return; // user just closed it, not a real error
       errEl.textContent = '❌ ' + e.message;
       errEl.style.display = 'block';
     }
   }
-
-  // Handles the return trip after signInWithRedirect() sends the user to Google and back.
-  auth.getRedirectResult().then(result => {
-    if (result.user) {
-      window.location.href = 'app.html';
-    }
-  }).catch(e => {
-    const errEl = document.getElementById('err');
-    errEl.textContent = '❌ ' + e.message;
-    errEl.style.display = 'block';
-  });
 
   document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
 </script>
