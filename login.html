@@ -4,6 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Log In — NutriSnap AI</title>
+<link rel="icon" type="image/png" href="icon.png"/>
+<meta property="og:image" content="logo.jpg"/>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
@@ -13,7 +15,8 @@
   .bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(108,99,255,0.2),transparent),radial-gradient(ellipse 60% 50% at 80% 80%,rgba(0,200,150,0.15),transparent);}
   .box{position:relative;z-index:1;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:40px 32px;width:100%;max-width:380px;}
   .logo{font-size:22px;font-weight:900;text-align:center;margin-bottom:6px;} .logo span{color:var(--primary);}
-  .tag{text-align:center;color:var(--sub);font-size:13px;margin-bottom:28px;}
+  .tag{text-align:center;color:var(--sub);font-size:13px;margin-bottom:4px;}
+  .value-prop{text-align:center;color:var(--sub);font-size:12px;margin-bottom:24px;opacity:0.75;}
   .mode-toggle{display:flex;background:rgba(255,255,255,0.05);border-radius:10px;padding:3px;margin-bottom:22px;}
   .mode-btn{flex:1;padding:9px;border:none;background:transparent;color:var(--sub);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;}
   .mode-btn.active{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;}
@@ -39,8 +42,10 @@
 <body>
 <div class="bg"></div>
 <div class="box">
-  <div class="logo">🌟 NutriSnap <span>AI</span></div>
+  <img src="icon.png" alt="NutriSnap AI" style="width:56px;height:56px;border-radius:16px;display:block;margin:0 auto 12px;">
+  <div class="logo">NutriSnap <span>AI</span></div>
   <div class="tag" id="tagline">Log in to continue your journey</div>
+  <div class="value-prop">📸 AI-powered meal tracking for Pakistani &amp; South Asian cuisine</div>
 
   <div class="mode-toggle">
     <button class="mode-btn active" id="mode-login" onclick="setMode('login')">Log In</button>
