@@ -6,6 +6,13 @@
     { "src": "*.jpg", "use": "@vercel/static" }
   ],
   "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "Cross-Origin-Opener-Policy": "same-origin-allow-popups"
+      },
+      "continue": true
+    },
     { "src": "/(.*)", "dest": "/$1" }
   ]
 }
