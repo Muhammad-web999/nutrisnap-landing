@@ -775,7 +775,8 @@
   function renderBilling(d) {
     const el = document.getElementById('billingCard');
     if (d.isProActive) {
-      const isPaid = d.plan === 'pro' && d.status === 'active';
+      const isCancelling = d.status === 'scheduled_cancel';
+      const isPaid = d.plan === 'pro' && (d.status === 'active' || isCancelling);
       const renews = d.currentPeriodEnd ? new Date(d.currentPeriodEnd).toLocaleDateString() : '—';
       const rewardUntil = d.rewardProUntil ? new Date(d.rewardProUntil).toLocaleDateString() : null;
       el.innerHTML = `
@@ -784,9 +785,9 @@
           <span class="pro-badge">PRO</span>
         </div>
         <div style="font-size:13px;color:var(--sub);margin-bottom:14px;">
-          ${isPaid ? `Renews on ${renews}` : `Bonus Pro access from rewards, active until ${rewardUntil}`}
+          ${isCancelling ? `Subscription cancelled — you keep Pro until ${renews}. It will not renew.` : isPaid ? `Renews on ${renews}` : `Bonus Pro access from rewards, active until ${rewardUntil || '—'}`}
         </div>
-        ${isPaid ? `<button class="btn btn-p" style="width:100%;" onclick="openBillingPortal()">⚙️ Manage Subscription</button>` : `<button class="btn btn-p" style="width:100%;" onclick="selectedPlan='monthly';renderBilling({...${JSON.stringify(d)}, isProActive:false, plan:'free'});" disabled style="opacity:.5;">You already have Pro access</button>`}
+        ${isPaid ? `<button class="btn btn-p" style="width:100%;" onclick="openBillingPortal()">${isCancelling ? '⚙️ Manage / Resubscribe' : '⚙️ Manage Subscription'}</button>` : `<button class="btn btn-p" style="width:100%;" onclick="selectedPlan='monthly';renderBilling({...${JSON.stringify(d)}, isProActive:false, plan:'free'});" disabled style="opacity:.5;">You already have Pro access</button>`}
       `;
       return;
     }
