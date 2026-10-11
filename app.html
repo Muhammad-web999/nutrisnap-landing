@@ -429,11 +429,9 @@
       </div>
 
       <div class="glass">
-        <div class="section-title" style="margin-bottom:4px;">🔔 Test Notifications</div>
-        <div style="font-size:11px;color:var(--sub);margin-bottom:12px;">Send yourself a test email right now — no waiting for the daily scheduler.</div>
-        <button class="btn btn-p" style="width:100%;margin-bottom:8px;" onclick="testNotification('test-reminder','Reminder')">📸 Send Reminder Email</button>
-        <button class="btn btn-p" style="width:100%;margin-bottom:8px;" onclick="testNotification('test-streak','Streak')">🔥 Send Streak Email</button>
-        <button class="btn btn-p" style="width:100%;" onclick="testNotification('test-weekly-report','Weekly Report')">📊 Send Weekly Report</button>
+        <div class="section-title" style="margin-bottom:4px;">🗑️ Delete Account</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:12px;">Permanently deletes your account and all your data (meals, points, friends, Google Health connection). An active subscription is cancelled first. This cannot be undone.</div>
+        <button class="btn btn-a" style="width:100%;" onclick="deleteAccount()">Delete My Account</button>
       </div>
     </div>
   </div>
@@ -892,8 +890,10 @@
   }
 
   async function connectGoogleHealth() {
-    const idToken = await auth.currentUser.getIdToken();
-    window.location.href = API_BASE + '/api/v1/health-sync/connect?token=' + encodeURIComponent(idToken);
+    try {
+      const data = await authedFetch('/api/v1/health-sync/connect-url', { method: 'POST' });
+      window.location.href = data.data.url;
+    } catch(e) { toast('❌ ' + e.message, true); }
   }
 
   async function syncGoogleHealth() {
@@ -945,6 +945,18 @@
     } catch(e) {
       toast('❌ ' + e.message, true);
     }
+  }
+
+  async function deleteAccount() {
+    const typed = prompt('This permanently deletes your account and ALL your data.\n\nType DELETE to confirm:');
+    if (typed === null) return;
+    if (typed !== 'DELETE') { toast('Account NOT deleted — you must type DELETE exactly', true); return; }
+    try {
+      await authedFetch('/api/v1/auth/me', { method: 'DELETE' });
+      toast('Your account has been deleted');
+      try { await auth.signOut(); } catch(e) {}
+      setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+    } catch(e) { toast('❌ ' + e.message, true); }
   }
 
   async function saveUsername() {
@@ -1148,7 +1160,7 @@
       <div style="padding:10px 0;border-top:1px solid var(--border);">
         <div style="font-weight:700;font-size:13px;">${escapeHtml(m.meal)} <span style="color:var(--sub);font-weight:400;">· ${escapeHtml(m.time || '')}</span></div>
         <div style="font-size:12px;color:#ddd;margin-top:2px;">${escapeHtml(m.food)}</div>
-        <div style="font-size:11px;color:var(--g);margin-top:2px;">${m.cal} kcal</div>
+        <div style="font-size:11px;color:var(--g);margin-top:2px;">${escapeHtml(m.cal)} kcal</div>
       </div>`).join('');
     overlay.innerHTML = `
       <div class="glass" style="max-width:420px;width:100%;max-height:80vh;overflow-y:auto;">
