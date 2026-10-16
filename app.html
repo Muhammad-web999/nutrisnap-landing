@@ -1214,7 +1214,7 @@
       const data = await authedFetch('/api/v1/social/friends/requests');
       document.getElementById('socialRequests').innerHTML = data.data.length
         ? data.data.map(r => `<div class="req-row">
-            <div><div class="req-name">${escapeHtml(r.name)}</div><div class="req-email">${escapeHtml(r.email)}</div></div>
+            <div><div class="req-name">${escapeHtml(r.name)}</div></div>
             <div><button class="btn-sm accept" onclick="respondRequest(${r.id},'accept')">Accept</button>
             <button class="btn-sm decline" onclick="respondRequest(${r.id},'decline')">Decline</button></div>
           </div>`).join('')
