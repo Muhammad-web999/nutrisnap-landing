@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NutriSnap AI — App</title>
 <link rel="icon" type="image/png" href="icon.png"/>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0D0D1A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NutriSnap">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon.png">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
@@ -238,6 +245,17 @@
 
   <div class="content">
 
+    <!-- INSTALL BANNER (only shown when the browser offers to install the app) -->
+    <div class="glass hidden" id="installBanner" style="display:flex;align-items:center;gap:10px;padding:12px 14px;">
+      <img src="icon.png" alt="" style="width:36px;height:36px;border-radius:9px;flex-shrink:0;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:13px;">Install NutriSnap AI</div>
+        <div style="font-size:11px;color:var(--sub);">Add it to your home screen for quick access</div>
+      </div>
+      <button class="claim" onclick="installApp()">Install</button>
+      <button class="link-btn" style="font-size:16px;" onclick="dismissInstall()" aria-label="Dismiss">✕</button>
+    </div>
+
     <!-- SCANNER -->
     <div class="tab-panel" id="panel-scanner">
       <div id="scanIdle" class="glass scan-zone">
@@ -438,6 +456,40 @@
 </div>
 
 <script>
+  // ── Installable app (PWA) ────────────────────────────────
+  let deferredInstallPrompt = null;
+  const isInstalledApp = () =>
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true ||
+    (document.referrer || '').startsWith('android-app://');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();               // keep the browser's own mini-bar away; we show our banner instead
+    deferredInstallPrompt = e;
+    let dismissed = false;
+    try { dismissed = localStorage.getItem('installDismissed') === '1'; } catch (err) {}
+    if (!isInstalledApp() && !dismissed) show('installBanner');
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    hide('installBanner');
+    toast('✅ NutriSnap AI installed!');
+  });
+  async function installApp() {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    try { await deferredInstallPrompt.userChoice; } catch (err) {}
+    deferredInstallPrompt = null;
+    hide('installBanner');
+  }
+  function dismissInstall() {
+    hide('installBanner');
+    try { localStorage.setItem('installDismissed', '1'); } catch (err) {}
+  }
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('/service-worker.js').catch(() => {}); });
+  }
+
   const firebaseConfig = {
     apiKey: "AIzaSyCNNGTM4qvJew9OR5g_x2ZYPgXJyTxRYrY",
     authDomain: "nutrisnap-ai-65f78.firebaseapp.com",
