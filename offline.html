@@ -1,1 +1,25 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D0D1A">
+<title>NutriSnap AI — Offline</title>
+<style>
+  body { margin:0; background:#0D0D1A; color:#fff; font-family:'Segoe UI',system-ui,sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; text-align:center; padding:24px; box-sizing:border-box; }
+  .box { max-width:340px; }
+  img { width:72px; height:72px; border-radius:18px; margin-bottom:16px; }
+  h1 { font-size:20px; margin:0 0 8px; }
+  p { color:#AAB4C8; font-size:14px; line-height:1.6; margin:0 0 20px; }
+  button { background:linear-gradient(135deg,#00C896,#6C63FF); color:#fff; border:none; border-radius:12px; padding:12px 24px; font-weight:700; font-size:15px; cursor:pointer; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <img src="/icon.png" alt="">
+    <h1>You're offline</h1>
+    <p>NutriSnap AI needs an internet connection to scan meals and sync your progress. Please check your connection and try again.</p>
+    <button onclick="location.reload()">Try again</button>
+  </div>
+</body>
+</html>
