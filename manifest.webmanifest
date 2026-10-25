@@ -1,1 +1,19 @@
-
+{
+  "name": "NutriSnap AI",
+  "short_name": "NutriSnap",
+  "description": "AI meal scanner and calorie tracker with Pakistani and South Asian food support.",
+  "id": "/app.html",
+  "start_url": "/app.html?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0D0D1A",
+  "theme_color": "#0D0D1A",
+  "lang": "en",
+  "categories": ["health", "food", "lifestyle"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
