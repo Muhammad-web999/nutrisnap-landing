@@ -3,7 +3,9 @@
   "builds": [
     { "src": "*.html", "use": "@vercel/static" },
     { "src": "*.png", "use": "@vercel/static" },
-    { "src": "*.jpg", "use": "@vercel/static" }
+    { "src": "*.jpg", "use": "@vercel/static" },
+    { "src": "manifest.webmanifest", "use": "@vercel/static" },
+    { "src": "service-worker.js", "use": "@vercel/static" }
   ],
   "routes": [
     {
