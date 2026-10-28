@@ -1385,6 +1385,7 @@
       const el2 = document.getElementById('weeklySuggestionText');
       if (!el2) return;
       if (res.data.suggestion) el2.textContent = res.data.suggestion;
+      else if (res.data.daysNeeded) el2.textContent = `Log meals on at least ${res.data.daysNeeded} different days to unlock your weekly insight (${res.data.daysLogged || 0} of ${res.data.daysNeeded} so far).`;
       else el2.textContent = 'Log a few meals this week to get your first personalized insight!';
       el2.className = '';
       el2.style.cssText = 'font-size:13px;color:#ddd;line-height:1.6;';
@@ -1397,6 +1398,7 @@
       const el2 = document.getElementById('monthlySuggestionText');
       if (!el2) return;
       if (res.data.suggestion) el2.textContent = res.data.suggestion;
+      else if (res.data.daysNeeded) el2.textContent = `Keep going! Your monthly insight unlocks once you've logged meals on ${res.data.daysNeeded} different days (${res.data.daysLogged || 0} of ${res.data.daysNeeded} so far).`;
       else el2.textContent = 'Log meals throughout the month to get your first monthly insight!';
       el2.className = '';
       el2.style.cssText = 'font-size:13px;color:#ddd;line-height:1.6;';
