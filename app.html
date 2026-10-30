@@ -456,6 +456,21 @@
 </div>
 
 <script>
+  // ── Android app mode ─────────────────────────────────────
+  // The Play Store version of NutriSnap is this same website wrapped as an Android app. It is started with
+  // "?source=twa" (and Android also tells us via the referrer). In that version we show NO prices, upgrade
+  // buttons or payment/subscription links, because Google Play has its own rules for selling digital
+  // subscriptions inside apps. People can still use Pro features if their account already has Pro.
+  const IS_ANDROID_APP = (() => {
+    const fromReferrer = (document.referrer || '').startsWith('android-app://');
+    let fromParam = false;
+    try { fromParam = new URLSearchParams(window.location.search).get('source') === 'twa'; } catch (e) {}
+    try {
+      if (fromReferrer || fromParam) sessionStorage.setItem('nutrisnapAndroidApp', '1');   // remembered while the app stays open
+      return sessionStorage.getItem('nutrisnapAndroidApp') === '1';
+    } catch (e) { return fromReferrer || fromParam; }
+  })();
+
   // ── Installable app (PWA) ────────────────────────────────
   let deferredInstallPrompt = null;
   const isInstalledApp = () =>
@@ -822,7 +837,27 @@
     }
   }
 
+  // Android app version of the billing card: only shows the plan status — no prices, buttons or links
+  function renderBillingAppMode(d) {
+    const el = document.getElementById('billingCard');
+    if (d.isProActive) {
+      const until = d.currentPeriodEnd ? new Date(d.currentPeriodEnd).toLocaleDateString()
+        : (d.rewardProUntil ? new Date(d.rewardProUntil).toLocaleDateString() : null);
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div class="section-title" style="margin-bottom:0;">💎 Your plan</div>
+          <span class="pro-badge">PRO</span>
+        </div>
+        <div style="font-size:13px;color:var(--sub);">${until ? `Pro is active until ${until}` : 'Pro is active on your account'}</div>`;
+    } else {
+      el.innerHTML = `
+        <div class="section-title" style="margin-bottom:8px;">💎 Your plan</div>
+        <div style="font-size:13px;color:var(--sub);">Free plan: 4 AI meal scans and 15 nutritionist chat messages per day.</div>`;
+    }
+  }
+
   function renderBilling(d) {
+    if (IS_ANDROID_APP) { renderBillingAppMode(d); return; }
     const el = document.getElementById('billingCard');
     if (d.isProActive) {
       const isCancelling = d.status === 'scheduled_cancel';
@@ -920,7 +955,7 @@
     const el = document.getElementById('healthSyncContent');
     const isPro = latestData && latestData.isProActive;
     if (!isPro) {
-      el.innerHTML = `<div class="empty-note">🔒 Google Health sync is a Pro feature.</div><button class="btn btn-p" style="width:100%;" onclick="switchTab('profile')">💎 Upgrade to Pro to unlock</button>`;
+      el.innerHTML = `<div class="empty-note">🔒 Google Health sync is a Pro feature.</div>${IS_ANDROID_APP ? '' : `<button class="btn btn-p" style="width:100%;" onclick="switchTab('profile')">💎 Upgrade to Pro to unlock</button>`}`;
       return;
     }
     if (!d.connected) {
@@ -1363,8 +1398,8 @@
     if (!isPro) {
       el.innerHTML = `
         <div class="section-title" style="margin-bottom:8px;">🧠 AI-Personalized Suggestions</div>
-        <div class="empty-note">🔒 Get weekly & monthly AI advice tailored to your goal with Pro.</div>
-        <button class="btn btn-g" style="width:100%;margin-top:8px;" onclick="switchTab('profile')">💎 Upgrade to Pro</button>
+        <div class="empty-note">🔒 Weekly & monthly AI advice tailored to your goal is a Pro feature.</div>
+        ${IS_ANDROID_APP ? '' : `<button class="btn btn-g" style="width:100%;margin-top:8px;" onclick="switchTab('profile')">💎 Upgrade to Pro</button>`}
       `;
       return;
     }
