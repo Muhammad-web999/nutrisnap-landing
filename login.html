@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
- <link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#0D0D1A">
 <meta charset="UTF-8"/>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0D0D1A">
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Log In — NutriSnap AI</title>
 <link rel="icon" type="image/png" href="icon.png"/>
@@ -39,6 +39,9 @@
   .divider span{padding:0 12px;}
   .google-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#3c4043;border:1px solid rgba(255,255,255,0.2);padding:12px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;transition:transform .2s;}
   .google-btn:hover{transform:translateY(-2px);}
+  .consent{display:none;align-items:flex-start;gap:10px;font-size:12px;color:var(--sub);line-height:1.5;margin:2px 0 14px;cursor:pointer;}
+  .consent input[type=checkbox]{width:18px;height:18px;padding:0;margin:1px 0 0;flex-shrink:0;accent-color:var(--primary);cursor:pointer;}
+  .consent a{color:var(--primary);}
 </style>
 </head>
 <body>
@@ -54,9 +57,14 @@
     <button class="mode-btn" id="mode-signup" onclick="setMode('signup')">Sign Up</button>
   </div>
 
-  <input type="email" id="email" placeholder="Email address">
-  <input type="password" id="password" placeholder="Password">
+  <input type="email" id="email" placeholder="Email address" autocomplete="email">
+  <input type="password" id="password" placeholder="Password" autocomplete="current-password">
   <a class="forgot" id="forgotLink" onclick="sendPasswordReset()">Forgot password?</a>
+
+  <label class="consent" id="consentRow">
+    <input type="checkbox" id="ageConsent">
+    <span>I am <strong>18 years or older</strong> and I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</span>
+  </label>
 
   <button class="submit" id="submitBtn" onclick="submit()">Log In</button>
   <div class="err" id="err"></div>
@@ -86,6 +94,35 @@
   const auth = firebase.auth();
 
   let mode = 'login';
+  let busy = false;   // true while we are signing in/up, so the page doesn't jump away too early
+
+  // ── Age + terms confirmation ──────────────────────────────
+  // NutriSnap AI is for adults (18+). New accounts must tick the box. Someone who already
+  // confirmed on this device is not asked again when they use "Continue with Google".
+  const AGE_MESSAGE = 'Please confirm that you are 18 or older and agree to the Terms and Privacy Policy.';
+  function consentTicked() { return document.getElementById('ageConsent').checked; }
+  function alreadyConfirmed() { try { return localStorage.getItem('nutrisnapAgeConfirmed') === '1'; } catch (e) { return false; } }
+  function rememberConfirmed() { try { localStorage.setItem('nutrisnapAgeConfirmed', '1'); } catch (e) {} }
+  function showConsent(visible) { document.getElementById('consentRow').style.display = visible ? 'flex' : 'none'; }
+
+  function showError(msg) { const el = document.getElementById('err'); el.textContent = msg; el.style.display = 'block'; }
+
+  // Turns Firebase's technical error codes into plain language
+  function friendlyAuthError(e) {
+    const map = {
+      'auth/invalid-credential': 'Incorrect email or password.',
+      'auth/wrong-password': 'Incorrect email or password.',
+      'auth/user-not-found': 'Incorrect email or password.',
+      'auth/invalid-email': 'That email address does not look right.',
+      'auth/email-already-in-use': 'That email already has an account. Try logging in instead.',
+      'auth/weak-password': 'Please choose a stronger password (at least 8 characters).',
+      'auth/too-many-requests': 'Too many attempts. Please wait a few minutes and try again.',
+      'auth/network-request-failed': 'Connection problem. Please check your internet and try again.',
+      'auth/user-disabled': 'This account has been disabled. Please contact support@nutrisnap.tech.',
+    };
+    return '❌ ' + (map[e && e.code] || 'Something went wrong. Please try again.');
+  }
+
   function setMode(m) {
     mode = m;
     document.getElementById('mode-login').classList.toggle('active', m === 'login');
@@ -93,12 +130,14 @@
     document.getElementById('submitBtn').textContent = m === 'login' ? 'Log In' : 'Create Account';
     document.getElementById('tagline').textContent = m === 'login' ? 'Log in to continue your journey' : 'Create your account — free to start';
     document.getElementById('forgotLink').style.display = m === 'login' ? 'block' : 'none';
+    document.getElementById('password').setAttribute('autocomplete', m === 'login' ? 'current-password' : 'new-password');
+    showConsent(m === 'signup');
     document.getElementById('err').style.display = 'none';
     document.getElementById('ok').style.display = 'none';
   }
 
   // Already logged in? Skip straight to the app.
-  auth.onAuthStateChanged(user => { if (user) window.location.href = 'app.html'; });
+  auth.onAuthStateChanged(user => { if (user && !busy) window.location.href = 'app.html'; });
 
   async function submit() {
     const email = document.getElementById('email').value.trim();
@@ -107,18 +146,26 @@
     const btn = document.getElementById('submitBtn');
     errEl.style.display = 'none';
     document.getElementById('ok').style.display = 'none';
-    if (!email || !password) { errEl.textContent = 'Enter email and password'; errEl.style.display = 'block'; return; }
+    if (!email || !password) { showError('Enter email and password'); return; }
+    if (mode === 'signup') {
+      if (password.length < 8) { showError('Please use a password with at least 8 characters.'); return; }
+      if (!consentTicked()) { showError(AGE_MESSAGE); return; }
+    }
+    busy = true;
     btn.disabled = true; btn.textContent = 'Please wait...';
     try {
       if (mode === 'login') {
         await auth.signInWithEmailAndPassword(email, password);
       } else {
-        await auth.createUserWithEmailAndPassword(email, password);
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        rememberConfirmed();
+        // Send the "please verify your email" message. If it fails, the app lets them request it again.
+        try { await cred.user.sendEmailVerification(); } catch (verifyErr) { /* not fatal */ }
       }
       window.location.href = 'app.html';
     } catch(e) {
-      errEl.textContent = '❌ ' + e.message;
-      errEl.style.display = 'block';
+      busy = false;
+      showError(friendlyAuthError(e));
       btn.disabled = false; btn.textContent = mode === 'login' ? 'Log In' : 'Create Account';
     }
   }
@@ -131,33 +178,38 @@
     const okEl = document.getElementById('ok');
     errEl.style.display = 'none'; okEl.style.display = 'none';
     if (!email) {
-      errEl.textContent = 'Enter your email above first, then tap "Forgot password?"';
-      errEl.style.display = 'block';
+      showError('Enter your email above first, then tap "Forgot password?"');
       return;
     }
     try {
       await auth.sendPasswordResetEmail(email);
-      okEl.textContent = '✅ Password reset email sent! Check your inbox.';
+      okEl.textContent = '✅ If that email has an account, a password reset link is on its way. Check your inbox.';
       okEl.style.display = 'block';
     } catch(e) {
-      errEl.textContent = '❌ ' + e.message;
-      errEl.style.display = 'block';
+      showError(friendlyAuthError(e));
     }
   }
 
   async function signInWithGoogle() {
-    const errEl = document.getElementById('err');
-    errEl.style.display = 'none';
+    document.getElementById('err').style.display = 'none';
+    // Google sign-in can create a brand-new account, so first-time users on this device must confirm age + terms
+    if (!consentTicked() && !alreadyConfirmed()) {
+      showConsent(true);
+      showError(AGE_MESSAGE);
+      return;
+    }
+    busy = true;
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
       const result = await auth.signInWithPopup(provider);
       if (result.user) {
+        rememberConfirmed();
         window.location.href = 'app.html';
       }
     } catch(e) {
-      if (e.code === 'auth/popup-closed-by-user') return; // user just closed it, not a real error
-      errEl.textContent = '❌ ' + e.message;
-      errEl.style.display = 'block';
+      busy = false;
+      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return; // user just closed it, not a real error
+      showError(friendlyAuthError(e));
     }
   }
 
